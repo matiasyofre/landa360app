@@ -8,41 +8,43 @@ import { AuditLogViewer } from './modules/m1_nucleo/AuditLogViewer';
 import { ExportBackupButton } from './modules/m1_nucleo/ExportBackupButton';
 import { CultivosParamManager } from './modules/m2_agricola/CultivosParamManager';
 import { ModuloAgricolaHub } from './modules/m2_agricola/ModuloAgricolaHub';
+import { ModuloGanaderoHub } from './modules/m3_ganaderia/ModuloGanaderoHub';
 import { LockScreen } from './modules/m1_nucleo/LockScreen';
 import { useInactivityLock } from './hooks/useInactivityLock';
-import { 
-  Layers, 
-  Building2, 
-  Wifi, 
-  ShieldCheck, 
-  Users, 
-  FileText, 
-  Download, 
+import {
+  Layers,
+  Building2,
+  Wifi,
+  ShieldCheck,
+  Users,
+  FileText,
+  Download,
   RefreshCw,
   LogOut,
   User,
   Sparkles,
   Sprout,
   Tractor,
-  Shield
+  Shield,
+  Beef
 } from 'lucide-react';
 
 function DashboardView() {
   const { user, setUser, tenant, rolActivo, cambiarRolActivo, roles, logout } = useAuth();
   const [showWizard, setShowWizard] = useState(false);
-  const [moduloActivo, setModuloActivo] = useState<'M1' | 'M2'>('M2');
+  const [moduloActivo, setModuloActivo] = useState<'M1' | 'M2' | 'M3'>('M3');
   const [activeTab, setActiveTab] = useState<'colaboradores' | 'roles' | 'auditoria' | 'respaldo' | 'parametros_agricolas'>('colaboradores');
-  
+
   // Blindaje Zero-Trust: Auto-Logout por inactividad a los 15 minutos
   const { isLocked, unlock } = useInactivityLock(15, Boolean(user && tenant));
 
   // 1. Si no está autenticado, muestra Pantalla de Login / Registro
   if (!user) {
     return (
-      <AuthScreen 
+      <AuthScreen
         onAuthSuccess={(authenticatedUser) => {
           setUser(authenticatedUser);
-        }} 
+        }}
       />
     );
   }
@@ -136,16 +138,15 @@ function DashboardView() {
 
       {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
-        
+
         {/* Selector Maestro de Módulos (Catálogo de Funcionalidades) */}
         <div className="flex items-center gap-2 bg-campo-card p-1.5 rounded-2xl border border-campo-borde shadow-sm overflow-x-auto">
           <button
             onClick={() => setModuloActivo('M1')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-              moduloActivo === 'M1'
-                ? 'bg-campo-bosque text-white shadow-sm'
-                : 'text-campo-muted hover:text-campo-texto hover:bg-campo-blanco'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${moduloActivo === 'M1'
+              ? 'bg-campo-bosque text-white shadow-sm'
+              : 'text-campo-muted hover:text-campo-texto hover:bg-campo-blanco'
+              }`}
           >
             <Shield className="w-4 h-4 text-campo-verde" />
             <span>M1: Seguridad & RLS (6)</span>
@@ -153,14 +154,24 @@ function DashboardView() {
 
           <button
             onClick={() => setModuloActivo('M2')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-              moduloActivo === 'M2'
-                ? 'bg-campo-bosque text-white shadow-sm ring-2 ring-campo-verde/50'
-                : 'text-campo-muted hover:text-campo-texto hover:bg-campo-blanco'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${moduloActivo === 'M2'
+              ? 'bg-campo-bosque text-white shadow-sm ring-2 ring-campo-verde/50'
+              : 'text-campo-muted hover:text-campo-texto hover:bg-campo-blanco'
+              }`}
           >
             <Tractor className="w-4 h-4 text-campo-verde" />
             <span>M2: Gestión Agrícola & Lotes (8)</span>
+          </button>
+
+          <button
+            onClick={() => setModuloActivo('M3')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${moduloActivo === 'M3'
+              ? 'bg-campo-bosque text-white shadow-sm ring-2 ring-campo-verde/50'
+              : 'text-campo-muted hover:text-campo-texto hover:bg-campo-blanco'
+              }`}
+          >
+            <Beef className="w-4 h-4 text-campo-verde" />
+            <span>M3: Ganadería & RFID (9)</span>
             <span className="px-1.5 py-0.2 text-[10px] bg-campo-verde text-white rounded font-bold">Activo</span>
           </button>
 
@@ -172,6 +183,15 @@ function DashboardView() {
             <span>"Armá tu campo" (FN-1.6)</span>
           </button>
         </div>
+
+        {/* ================================================================== */}
+        {/* VISTAS DEL MÓDULO 3: GANADERÍA & RFID (9 FUNCIONALIDADES)          */}
+        {/* ================================================================== */}
+        {moduloActivo === 'M3' && (
+          <ModuloGanaderoHub
+            canViewFinancials={rolActivo?.nombre !== 'Capataz' && rolActivo?.nombre !== 'Contratista'}
+          />
+        )}
 
         {/* ================================================================== */}
         {/* VISTAS DEL MÓDULO 2: GESTIÓN AGRÍCOLA (8 FUNCIONES COMPLETAS)      */}
@@ -219,11 +239,10 @@ function DashboardView() {
             <div className="flex items-center gap-2 border-b border-campo-borde pb-2 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('colaboradores')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'colaboradores'
-                    ? 'bg-campo-verde text-white shadow-sm'
-                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'colaboradores'
+                  ? 'bg-campo-verde text-white shadow-sm'
+                  : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                  }`}
               >
                 <Users className="w-4 h-4" />
                 <span>Colaboradores (FN-1.2)</span>
@@ -231,11 +250,10 @@ function DashboardView() {
 
               <button
                 onClick={() => setActiveTab('roles')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'roles'
-                    ? 'bg-campo-verde text-white shadow-sm'
-                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'roles'
+                  ? 'bg-campo-verde text-white shadow-sm'
+                  : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                  }`}
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>Roles y Permisos (FN-1.2 & FN-1.3)</span>
@@ -243,11 +261,10 @@ function DashboardView() {
 
               <button
                 onClick={() => setActiveTab('auditoria')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'auditoria'
-                    ? 'bg-campo-verde text-white shadow-sm'
-                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'auditoria'
+                  ? 'bg-campo-verde text-white shadow-sm'
+                  : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                  }`}
               >
                 <FileText className="w-4 h-4" />
                 <span>Bitácora de Auditoría (FN-1.4)</span>
@@ -255,11 +272,10 @@ function DashboardView() {
 
               <button
                 onClick={() => setActiveTab('respaldo')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'respaldo'
-                    ? 'bg-campo-verde text-white shadow-sm'
-                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'respaldo'
+                  ? 'bg-campo-verde text-white shadow-sm'
+                  : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                  }`}
               >
                 <Download className="w-4 h-4" />
                 <span>Respaldo en 1 Clic (FN-1.5)</span>
@@ -267,11 +283,10 @@ function DashboardView() {
 
               <button
                 onClick={() => setActiveTab('parametros_agricolas')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                  activeTab === 'parametros_agricolas'
-                    ? 'bg-campo-verde text-white shadow-sm'
-                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'parametros_agricolas'
+                  ? 'bg-campo-verde text-white shadow-sm'
+                  : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                  }`}
               >
                 <Sprout className="w-4 h-4" />
                 <span>Cultivos & Campañas</span>
@@ -291,7 +306,7 @@ function DashboardView() {
 
       {/* Footer */}
       <footer className="border-t border-campo-borde p-4 text-center text-xs text-campo-muted font-mono bg-campo-blanco">
-        Landa360 &bull; Plataforma Integral de Gestión Agropecuaria &bull; Sistema Oficial
+        Campo360 &bull; Plataforma Integral de Gestión Agropecuaria &bull; Sistema Oficial
       </footer>
     </div>
   );
