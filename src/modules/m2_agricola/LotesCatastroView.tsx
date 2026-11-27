@@ -29,7 +29,7 @@ export const LotesCatastroView: React.FC = () => {
   const [cultivos, setCultivos] = useState<Cultivo[]>([]);
   const [campanas, setCampanas] = useState<Campana[]>([]);
   const [campanaSeleccionadaId, setCampanaSeleccionadaId] = useState<string>('');
-  const [capaMapa, setCapaMapa] = useState<'google' | 'esri' | 'osm'>('google');
+  const [capaMapa, setCapaMapa] = useState<'google' | 'esri' | 'osm'>('esri');
   const [modalKmlOpen, setModalKmlOpen] = useState(false);
   const [modalLoteManualOpen, setModalLoteManualOpen] = useState(false);
   const [loteEnEdicion, setLoteEnEdicion] = useState<Lote | null>(null);
@@ -102,10 +102,16 @@ export const LotesCatastroView: React.FC = () => {
         zoomControl: true
       });
 
-      // Capa Inicial: Google Satellite Hybrid (con rutas y localidades)
-      const initialLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-        attribution: 'Tiles &copy; Google Satelital &mdash; Catastro Campo360',
-        maxZoom: 20
+      // Capa Inicial: Esri World Imagery (Satélite HD)
+      const initialLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Catastro Campo360',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Etiquetas y rutas superpuestas
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        opacity: 0.85
       }).addTo(map);
 
       tileLayerRef.current = initialLayer;
@@ -134,7 +140,8 @@ export const LotesCatastroView: React.FC = () => {
 
     let nuevaCapa: L.TileLayer;
     if (tipo === 'google') {
-      nuevaCapa = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      nuevaCapa = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
         attribution: 'Tiles &copy; Google Satelital &mdash; Catastro Campo360',
         maxZoom: 20
       });
@@ -144,8 +151,9 @@ export const LotesCatastroView: React.FC = () => {
         maxZoom: 19
       });
     } else {
-      nuevaCapa = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
+      nuevaCapa = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        subdomains: ['a', 'b', 'c', 'd'],
+        attribution: '&copy; CartoDB & OpenStreetMap contributors',
         maxZoom: 19
       });
     }
