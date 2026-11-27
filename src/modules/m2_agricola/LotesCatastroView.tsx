@@ -29,7 +29,7 @@ export const LotesCatastroView: React.FC = () => {
   const [cultivos, setCultivos] = useState<Cultivo[]>([]);
   const [campanas, setCampanas] = useState<Campana[]>([]);
   const [campanaSeleccionadaId, setCampanaSeleccionadaId] = useState<string>('');
-  const [capaMapa, setCapaMapa] = useState<'google' | 'esri' | 'osm'>('esri');
+  const [capaMapa, setCapaMapa] = useState<'google' | 'esri' | 'osm'>('google');
   const [modalKmlOpen, setModalKmlOpen] = useState(false);
   const [modalLoteManualOpen, setModalLoteManualOpen] = useState(false);
   const [loteEnEdicion, setLoteEnEdicion] = useState<Lote | null>(null);
@@ -102,16 +102,10 @@ export const LotesCatastroView: React.FC = () => {
         zoomControl: true
       });
 
-      // Capa Inicial: Esri World Imagery (Satélite HD)
-      const initialLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Catastro Campo360',
-        maxZoom: 19
-      }).addTo(map);
-
-      // Etiquetas y rutas superpuestas
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        opacity: 0.85
+      // Capa Inicial Predeterminada: Google Satelital Híbrido (100% Gratuito, Sin API Key, Satélite + Rutas)
+      const initialLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        attribution: 'Tiles &copy; Google Maps &mdash; Catastro Campo360',
+        maxZoom: 20
       }).addTo(map);
 
       tileLayerRef.current = initialLayer;
@@ -140,20 +134,21 @@ export const LotesCatastroView: React.FC = () => {
 
     let nuevaCapa: L.TileLayer;
     if (tipo === 'google') {
-      nuevaCapa = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      // Google Satelital Híbrido (Satélite HD + nombres de rutas, parajes y límites) - 100% Gratis sin API Key
+      nuevaCapa = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         attribution: 'Tiles &copy; Google Satelital &mdash; Catastro Campo360',
         maxZoom: 20
       });
     } else if (tipo === 'esri') {
+      // Esri World Imagery (Fotografía Satelital Global de Alta Definición) - 100% Gratis sin API Key
       nuevaCapa = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles &copy; Esri World Imagery &mdash; Catastro Campo360',
         maxZoom: 19
       });
     } else {
-      nuevaCapa = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        subdomains: ['a', 'b', 'c', 'd'],
-        attribution: '&copy; CartoDB & OpenStreetMap contributors',
+      // Esri World Street Map (Topografía, Catastro y Calles) - 100% Gratis sin API Key
+      nuevaCapa = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri World Street Map &mdash; Catastro Campo360',
         maxZoom: 19
       });
     }
