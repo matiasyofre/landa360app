@@ -6,6 +6,8 @@ import { ColaboradoresManager } from './modules/m1_nucleo/ColaboradoresManager';
 import { RolesManager } from './modules/m1_nucleo/RolesManager';
 import { AuditLogViewer } from './modules/m1_nucleo/AuditLogViewer';
 import { ExportBackupButton } from './modules/m1_nucleo/ExportBackupButton';
+import { LockScreen } from './modules/m1_nucleo/LockScreen';
+import { useInactivityLock } from './hooks/useInactivityLock';
 import { 
   Layers, 
   Building2, 
@@ -24,6 +26,9 @@ function DashboardView() {
   const { user, setUser, tenant, rolActivo, cambiarRolActivo, roles, logout } = useAuth();
   const [showWizard, setShowWizard] = useState(false);
   const [activeTab, setActiveTab] = useState<'colaboradores' | 'roles' | 'auditoria' | 'respaldo'>('colaboradores');
+  
+  // Blindaje Zero-Trust: Auto-Logout por inactividad a los 15 minutos
+  const { isLocked, unlock } = useInactivityLock(15, Boolean(user && tenant));
 
   // 1. BLOQUEO ZERO-TRUST: Si no está autenticado, muestra Pantalla de Login / Registro
   if (!user) {
@@ -36,7 +41,12 @@ function DashboardView() {
     );
   }
 
-  // 2. ONBOARDING: Si el usuario está autenticado pero aún no configuró su campo (o pidió reconfigurar)
+  // 2. BLOQUEO POR INACTIVIDAD
+  if (isLocked) {
+    return <LockScreen onUnlock={unlock} />;
+  }
+
+  // 3. ONBOARDING: Si el usuario está autenticado pero aún no configuró su campo (o pidió reconfigurar)
   if (!tenant || showWizard) {
     return (
       <div className="min-h-screen bg-slate-950 p-4 sm:p-8 flex flex-col justify-center">
