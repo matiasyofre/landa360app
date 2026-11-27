@@ -7,6 +7,7 @@ import { RolesManager } from './modules/m1_nucleo/RolesManager';
 import { AuditLogViewer } from './modules/m1_nucleo/AuditLogViewer';
 import { ExportBackupButton } from './modules/m1_nucleo/ExportBackupButton';
 import { CultivosParamManager } from './modules/m2_agricola/CultivosParamManager';
+import { ModuloAgricolaHub } from './modules/m2_agricola/ModuloAgricolaHub';
 import { LockScreen } from './modules/m1_nucleo/LockScreen';
 import { useInactivityLock } from './hooks/useInactivityLock';
 import { 
@@ -21,12 +22,15 @@ import {
   LogOut,
   User,
   Sparkles,
-  Sprout
+  Sprout,
+  Tractor,
+  Shield
 } from 'lucide-react';
 
 function DashboardView() {
   const { user, setUser, tenant, rolActivo, cambiarRolActivo, roles, logout } = useAuth();
   const [showWizard, setShowWizard] = useState(false);
+  const [moduloActivo, setModuloActivo] = useState<'M1' | 'M2'>('M2');
   const [activeTab, setActiveTab] = useState<'colaboradores' | 'roles' | 'auditoria' | 'respaldo' | 'parametros_agricolas'>('colaboradores');
   
   // Blindaje Zero-Trust: Auto-Logout por inactividad a los 15 minutos
@@ -133,115 +137,155 @@ function DashboardView() {
       {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
         
-        {/* Banner del Establecimiento en Blanco Puro con borde Arena */}
-        <div className="bg-campo-card p-6 rounded-2xl border border-campo-borde shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-campo-oliva uppercase tracking-wider">
-                M1: Núcleo del Sistema & Seguridad
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-campo-arena text-campo-bosque border border-campo-borde font-semibold">
-                Aislamiento RLS Activo
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-campo-texto tracking-tight">
-              Consola de Administración y Seguridad
-            </h1>
-            <p className="text-xs sm:text-sm text-campo-muted max-w-3xl leading-relaxed">
-              Gestión de colaboradores, roles dinámicos, permisos con privacidad estricta y bitácora de auditoría inmutable de {tenant.nombreFantasia}.
-            </p>
-          </div>
-
-          {/* Quick Stats del Tenant */}
-          <div className="flex items-center gap-3 self-start sm:self-auto text-xs font-mono bg-campo-arena p-3 rounded-xl border border-campo-borde">
-            <div>
-              <span className="text-campo-muted block text-[10px] uppercase font-semibold">Superficie</span>
-              <span className="text-campo-texto font-bold text-sm">{tenant.hectareasTotales || 1250} ha</span>
-            </div>
-            <div className="border-l border-campo-borde pl-3">
-              <span className="text-campo-muted block text-[10px] uppercase font-semibold">Perfil</span>
-              <span className="text-campo-oliva font-bold text-sm capitalize">{tenant.perfilProductivo || 'Mixto'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Pestañas de Navegación Oficiales del Módulo 1 */}
-        <div className="flex items-center gap-2 border-b border-campo-borde pb-2 overflow-x-auto">
+        {/* Selector Maestro de Módulos (Catálogo de Funcionalidades) */}
+        <div className="flex items-center gap-2 bg-campo-card p-1.5 rounded-2xl border border-campo-borde shadow-sm overflow-x-auto">
           <button
-            onClick={() => setActiveTab('colaboradores')}
+            onClick={() => setModuloActivo('M1')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'colaboradores'
-                ? 'bg-campo-verde text-white shadow-sm'
-                : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+              moduloActivo === 'M1'
+                ? 'bg-campo-bosque text-white shadow-sm'
+                : 'text-campo-muted hover:text-campo-texto hover:bg-campo-blanco'
             }`}
           >
-            <Users className="w-4 h-4" />
-            <span>Colaboradores (FN-1.2)</span>
+            <Shield className="w-4 h-4 text-campo-verde" />
+            <span>M1: Seguridad & RLS (6)</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('roles')}
+            onClick={() => setModuloActivo('M2')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'roles'
-                ? 'bg-campo-verde text-white shadow-sm'
-                : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+              moduloActivo === 'M2'
+                ? 'bg-campo-bosque text-white shadow-sm ring-2 ring-campo-verde/50'
+                : 'text-campo-muted hover:text-campo-texto hover:bg-campo-blanco'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Roles y Permisos (FN-1.2 & FN-1.3)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('auditoria')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'auditoria'
-                ? 'bg-campo-verde text-white shadow-sm'
-                : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>Bitácora de Auditoría (FN-1.4)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('respaldo')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'respaldo'
-                ? 'bg-campo-verde text-white shadow-sm'
-                : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-            }`}
-          >
-            <Download className="w-4 h-4" />
-            <span>Respaldo en 1 Clic (FN-1.5)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('parametros_agricolas')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'parametros_agricolas'
-                ? 'bg-campo-verde text-white shadow-sm'
-                : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
-            }`}
-          >
-            <Sprout className="w-4 h-4" />
-            <span>Cultivos & Campañas (M2)</span>
+            <Tractor className="w-4 h-4 text-campo-verde" />
+            <span>M2: Gestión Agrícola & Lotes (8)</span>
+            <span className="px-1.5 py-0.2 text-[10px] bg-campo-verde text-white rounded font-bold">Activo</span>
           </button>
 
           <button
             onClick={() => setShowWizard(true)}
-            className="px-3 py-2 rounded-xl text-xs font-semibold text-campo-oliva hover:text-campo-bosque bg-campo-card border border-campo-borde hover:bg-campo-arena transition-colors ml-auto flex items-center gap-1.5 whitespace-nowrap"
+            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-campo-oliva hover:text-campo-bosque bg-campo-card border border-campo-borde hover:bg-campo-arena transition-colors ml-auto flex items-center gap-1.5 whitespace-nowrap"
           >
             <Sparkles className="w-3.5 h-3.5 text-campo-verde" />
             <span>"Armá tu campo" (FN-1.6)</span>
           </button>
         </div>
 
-        {/* Vistas Reales y Operativas del Módulo 1 y Módulo 2 */}
-        {activeTab === 'colaboradores' && <ColaboradoresManager />}
-        {activeTab === 'roles' && <RolesManager />}
-        {activeTab === 'auditoria' && <AuditLogViewer />}
-        {activeTab === 'respaldo' && <ExportBackupButton />}
-        {activeTab === 'parametros_agricolas' && <CultivosParamManager />}
+        {/* ================================================================== */}
+        {/* VISTAS DEL MÓDULO 2: GESTIÓN AGRÍCOLA (8 FUNCIONES COMPLETAS)      */}
+        {/* ================================================================== */}
+        {moduloActivo === 'M2' && <ModuloAgricolaHub />}
+
+        {/* ================================================================== */}
+        {/* VISTAS DEL MÓDULO 1: SEGURIDAD & RLS                               */}
+        {/* ================================================================== */}
+        {moduloActivo === 'M1' && (
+          <div className="space-y-6">
+            {/* Banner del Establecimiento M1 */}
+            <div className="bg-campo-card p-6 rounded-2xl border border-campo-borde shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-campo-oliva uppercase tracking-wider">
+                    M1: Núcleo del Sistema & Seguridad
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-campo-arena text-campo-bosque border border-campo-borde font-semibold">
+                    Aislamiento RLS Activo
+                  </span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-campo-texto tracking-tight">
+                  Consola de Administración y Seguridad
+                </h1>
+                <p className="text-xs sm:text-sm text-campo-muted max-w-3xl leading-relaxed">
+                  Gestión de colaboradores, roles dinámicos, permisos con privacidad estricta y bitácora de auditoría inmutable de {tenant.nombreFantasia}.
+                </p>
+              </div>
+
+              {/* Quick Stats del Tenant */}
+              <div className="flex items-center gap-3 self-start sm:self-auto text-xs font-mono bg-campo-arena p-3 rounded-xl border border-campo-borde">
+                <div>
+                  <span className="text-campo-muted block text-[10px] uppercase font-semibold">Superficie</span>
+                  <span className="text-campo-texto font-bold text-sm">{tenant.hectareasTotales || 1250} ha</span>
+                </div>
+                <div className="border-l border-campo-borde pl-3">
+                  <span className="text-campo-muted block text-[10px] uppercase font-semibold">Perfil</span>
+                  <span className="text-campo-oliva font-bold text-sm capitalize">{tenant.perfilProductivo || 'Mixto'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Pestañas de Navegación Oficiales del Módulo 1 */}
+            <div className="flex items-center gap-2 border-b border-campo-borde pb-2 overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('colaboradores')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'colaboradores'
+                    ? 'bg-campo-verde text-white shadow-sm'
+                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>Colaboradores (FN-1.2)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('roles')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'roles'
+                    ? 'bg-campo-verde text-white shadow-sm'
+                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Roles y Permisos (FN-1.2 & FN-1.3)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('auditoria')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'auditoria'
+                    ? 'bg-campo-verde text-white shadow-sm'
+                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Bitácora de Auditoría (FN-1.4)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('respaldo')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'respaldo'
+                    ? 'bg-campo-verde text-white shadow-sm'
+                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                }`}
+              >
+                <Download className="w-4 h-4" />
+                <span>Respaldo en 1 Clic (FN-1.5)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('parametros_agricolas')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                  activeTab === 'parametros_agricolas'
+                    ? 'bg-campo-verde text-white shadow-sm'
+                    : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+                }`}
+              >
+                <Sprout className="w-4 h-4" />
+                <span>Cultivos & Campañas</span>
+              </button>
+            </div>
+
+            {/* Vistas Módulo 1 */}
+            {activeTab === 'colaboradores' && <ColaboradoresManager />}
+            {activeTab === 'roles' && <RolesManager />}
+            {activeTab === 'auditoria' && <AuditLogViewer />}
+            {activeTab === 'respaldo' && <ExportBackupButton />}
+            {activeTab === 'parametros_agricolas' && <CultivosParamManager />}
+          </div>
+        )}
 
       </main>
 
