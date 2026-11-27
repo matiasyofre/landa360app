@@ -7,10 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'isotype_campo360.svg'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'isotype_landa360.svg'],
       manifest: {
-        name: 'Campo360 / Landa360',
-        short_name: 'Campo360',
+        name: 'Landa360 / Landa360',
+        short_name: 'Landa360',
         description: 'Plataforma Integral de Gestión Agropecuaria',
         theme_color: '#022c22',
         background_color: '#020617',
@@ -18,7 +18,7 @@ export default defineConfig({
         orientation: 'portrait',
         icons: [
           {
-            src: '/isotype_campo360.svg',
+            src: '/isotype_landa360.svg',
             sizes: '192x192 512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable'

@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
 
   const [tenant, setTenantState] = useState<TenantRecord | null>(() => {
-    const saved = localStorage.getItem('campo360_active_tenant');
+    const saved = localStorage.getItem('landa360_active_tenant') || localStorage.getItem('campo360_active_tenant');
     if (saved) {
       try { return JSON.parse(saved); } catch { return null; }
     }
@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           // Si no hay sesión real activa en Supabase, forzar null y limpiar almacenamiento previo
           setUser(null);
-          localStorage.removeItem('campo360_active_user');
+          localStorage.removeItem('landa360_active_user');
         }
       } catch (err) {
         console.warn('Error al verificar sesión de Supabase:', err);
@@ -141,8 +141,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nombreCompleto: session.user.user_metadata?.nombre_completo || session.user.email?.split('@')[0] || 'Usuario'
         };
         setUser(authUser);
-        localStorage.setItem('campo360_active_user', JSON.stringify(authUser));
-      } else if (!localStorage.getItem('campo360_active_user')) {
+        localStorage.setItem('landa360_active_user', JSON.stringify(authUser));
+      } else if (!localStorage.getItem('landa360_active_user')) {
         setUser(null);
       }
     });
@@ -155,9 +155,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Persistir usuario activo
   useEffect(() => {
     if (user) {
-      localStorage.setItem('campo360_active_user', JSON.stringify(user));
+      localStorage.setItem('landa360_active_user', JSON.stringify(user));
     } else {
-      localStorage.removeItem('campo360_active_user');
+      localStorage.removeItem('landa360_active_user');
     }
   }, [user]);
 
@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (tenant) {
-      localStorage.setItem('campo360_active_tenant', JSON.stringify(tenant));
+      localStorage.setItem('landa360_active_tenant', JSON.stringify(tenant));
       recargarRoles();
     }
   }, [tenant]);
@@ -231,8 +231,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setTenantState(null);
-    localStorage.removeItem('campo360_active_user');
-    localStorage.removeItem('campo360_active_tenant');
+    localStorage.removeItem('landa360_active_user');
+    localStorage.removeItem('landa360_active_tenant');
   };
 
   return (

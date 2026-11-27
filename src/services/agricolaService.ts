@@ -9,12 +9,16 @@ import {
   CULTIVOS_SUGERIDOS_BASE 
 } from '../types/agricola';
 
-const LOCAL_STORAGE_CULTIVOS = 'campo360_param_cultivos';
-const LOCAL_STORAGE_CAMPANAS = 'campo360_param_campanas';
-const LOCAL_STORAGE_LOTES = 'campo360_lotes';
-const LOCAL_STORAGE_OTS = 'campo360_ordenes_trabajo';
-const LOCAL_STORAGE_MONITOREOS = 'campo360_monitoreos_plagas';
-const LOCAL_STORAGE_MARGENES = 'campo360_margenes_brutos';
+const LOCAL_STORAGE_CULTIVOS = 'landa360_param_cultivos';
+const LOCAL_STORAGE_CAMPANAS = 'landa360_param_campanas';
+const LOCAL_STORAGE_LOTES = 'landa360_lotes';
+const LOCAL_STORAGE_OTS = 'landa360_ordenes_trabajo';
+const LOCAL_STORAGE_MONITOREOS = 'landa360_monitoreos_plagas';
+const LOCAL_STORAGE_MARGENES = 'landa360_margenes_brutos';
+
+function getLocalItem(key: string, legacyKey: string): string | null {
+  return localStorage.getItem(key) || localStorage.getItem(legacyKey);
+}
 
 // ==============================================================================
 // UTILIDADES GEODÉSICAS WGS84 & KML PARSER (FN-2.2)
@@ -126,7 +130,7 @@ export const agricolaService = {
       console.warn('Fallo Supabase obtenerCampanas, usando fallback local:', err);
     }
 
-    const local = localStorage.getItem(LOCAL_STORAGE_CAMPANAS);
+    const local = getLocalItem(LOCAL_STORAGE_CAMPANAS, 'campo360_param_campanas');
     if (local) {
       try {
         return JSON.parse(local);
@@ -247,7 +251,7 @@ export const agricolaService = {
       console.warn('Fallo Supabase obtenerCultivos, usando fallback local:', err);
     }
 
-    const local = localStorage.getItem(LOCAL_STORAGE_CULTIVOS);
+    const local = getLocalItem(LOCAL_STORAGE_CULTIVOS, 'campo360_param_cultivos');
     if (local) {
       try {
         const parsed = JSON.parse(local);
@@ -402,7 +406,7 @@ export const agricolaService = {
       console.warn('Fallo Supabase obtenerLotes, usando fallback local:', err);
     }
 
-    const local = localStorage.getItem(LOCAL_STORAGE_LOTES);
+    const local = getLocalItem(LOCAL_STORAGE_LOTES, 'campo360_lotes');
     if (local) {
       try {
         const parsed = JSON.parse(local);
@@ -565,7 +569,7 @@ export const agricolaService = {
       console.warn('Fallo Supabase obtenerOTs, usando fallback local:', err);
     }
 
-    const local = localStorage.getItem(LOCAL_STORAGE_OTS);
+    const local = getLocalItem(LOCAL_STORAGE_OTS, 'campo360_ordenes_trabajo');
     if (local) {
       try {
         const parsed = JSON.parse(local);
@@ -746,7 +750,7 @@ export const agricolaService = {
       console.warn('Fallo Supabase obtenerMonitoreos, usando fallback local:', err);
     }
 
-    const local = localStorage.getItem(LOCAL_STORAGE_MONITOREOS);
+    const local = getLocalItem(LOCAL_STORAGE_MONITOREOS, 'campo360_monitoreos_plagas');
     if (local) {
       try {
         const parsed = JSON.parse(local);
@@ -856,7 +860,7 @@ export const agricolaService = {
       console.warn('Fallo Supabase obtenerMargenesBrutos, usando fallback:', err);
     }
 
-    const local = localStorage.getItem(LOCAL_STORAGE_MARGENES);
+    const local = getLocalItem(LOCAL_STORAGE_MARGENES, 'campo360_margenes_brutos');
     if (local) {
       try {
         const parsed = JSON.parse(local);

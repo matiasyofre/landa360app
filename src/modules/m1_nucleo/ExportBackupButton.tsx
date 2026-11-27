@@ -28,7 +28,7 @@ export function ExportBackupButton() {
 
       const backupData = {
         metadata: {
-          sistema: 'Campo360',
+          sistema: 'Landa360',
           version: 'Escenario A (MVP)',
           tenantId: tenant.id,
           cuit: tenant.cuit,
@@ -47,7 +47,7 @@ export function ExportBackupButton() {
       )}`;
 
       const downloadAnchor = document.createElement('a');
-      const filename = `backup_campo360_${tenant.cuit.replace(/[^0-9]/g, '')}_${new Date().toISOString().split('T')[0]}.json`;
+      const filename = `backup_landa360_${tenant.cuit.replace(/[^0-9]/g, '')}_${new Date().toISOString().split('T')[0]}.json`;
       downloadAnchor.setAttribute('href', jsonString);
       downloadAnchor.setAttribute('download', filename);
       document.body.appendChild(downloadAnchor);

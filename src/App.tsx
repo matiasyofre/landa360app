@@ -72,7 +72,7 @@ function DashboardView() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-base tracking-tight text-white">Campo360</span>
+              <span className="font-extrabold text-base tracking-tight text-white">Landa360</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-campo-verde/30 text-campo-arena border border-campo-verde/50 font-semibold">
                 Módulo 1 &bull; Seguridad & RLS
               </span>
@@ -291,7 +291,7 @@ function DashboardView() {
 
       {/* Footer */}
       <footer className="border-t border-campo-borde p-4 text-center text-xs text-campo-muted font-mono bg-campo-blanco">
-        Campo360 &bull; Plataforma Integral de Gestión Agropecuaria &bull; Sistema Oficial
+        Landa360 &bull; Plataforma Integral de Gestión Agropecuaria &bull; Sistema Oficial
       </footer>
     </div>
   );

@@ -104,7 +104,7 @@ export const LotesCatastroView: React.FC = () => {
 
       // Capa Inicial Predeterminada: Google Satelital Híbrido (100% Gratuito, Sin API Key, Satélite + Rutas)
       const initialLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-        attribution: 'Tiles &copy; Google Maps &mdash; Catastro Campo360',
+        attribution: 'Tiles &copy; Google Maps &mdash; Catastro Landa360',
         maxZoom: 20
       }).addTo(map);
 
@@ -136,19 +136,19 @@ export const LotesCatastroView: React.FC = () => {
     if (tipo === 'google') {
       // Google Satelital Híbrido (Satélite HD + nombres de rutas, parajes y límites) - 100% Gratis sin API Key
       nuevaCapa = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-        attribution: 'Tiles &copy; Google Satelital &mdash; Catastro Campo360',
+        attribution: 'Tiles &copy; Google Satelital &mdash; Catastro Landa360',
         maxZoom: 20
       });
     } else if (tipo === 'esri') {
       // Esri World Imagery (Fotografía Satelital Global de Alta Definición) - 100% Gratis sin API Key
       nuevaCapa = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri World Imagery &mdash; Catastro Campo360',
+        attribution: 'Tiles &copy; Esri World Imagery &mdash; Catastro Landa360',
         maxZoom: 19
       });
     } else {
       // Esri World Street Map (Topografía, Catastro y Calles) - 100% Gratis sin API Key
       nuevaCapa = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri World Street Map &mdash; Catastro Campo360',
+        attribution: 'Tiles &copy; Esri World Street Map &mdash; Catastro Landa360',
         maxZoom: 19
       });
     }

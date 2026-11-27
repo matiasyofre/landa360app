@@ -1,5 +1,5 @@
 /**
- * Catálogo Maestro de Funciones de Campo360 (Escenario A)
+ * Catálogo Maestro de Funciones de Landa360 (Escenario A)
  * Cada función representa un permiso granular accionable asignable a roles dinámicos.
  */
 
@@ -34,7 +34,7 @@ export interface UsuarioPerfil {
   activo: boolean;
 }
 
-// Catálogo inmutable de funciones oficiales de Campo360
+// Catálogo inmutable de funciones oficiales de Landa360
 export const CATALOGO_FUNCIONES: FuncionPermiso[] = [
   // M1: Núcleo y Seguridad
   {

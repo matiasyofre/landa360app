@@ -111,7 +111,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
     onAuthSuccess({
       id: `usr_demo_${rolNombre.toLowerCase().replace(/[^a-z]/g, '')}`,
       email: emailDemo,
-      nombreCompleto: `${rolNombre} Campo360`
+      nombreCompleto: `${rolNombre} Landa360`
     });
   };
 
@@ -125,7 +125,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             <Layers className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-extrabold text-campo-texto tracking-tight">
-            Campo360
+            Landa360
           </h1>
           <p className="text-xs sm:text-sm text-campo-muted max-w-sm mx-auto">
             Plataforma Integral de Gestión Agropecuaria &bull; Acceso Seguro con Aislamiento RLS
@@ -199,7 +199,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="productor@campo360.com"
+                  placeholder="productor@landa360.com"
                   className="w-full bg-campo-blanco border border-campo-borde rounded-xl pl-9 pr-3 py-2 text-xs text-campo-texto focus:outline-none focus:border-campo-verde"
                   required
                 />
@@ -273,7 +273,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => handleDemoLogin('Dueño / Administrador', 'dueno@campo360.com')}
+              onClick={() => handleDemoLogin('Dueño / Administrador', 'dueno@landa360.com')}
               className="p-2.5 rounded-xl bg-campo-blanco hover:bg-campo-arena border border-campo-borde text-left transition-colors"
             >
               <span className="text-[11px] font-bold text-campo-texto block">Dueño</span>
@@ -282,7 +282,7 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
 
             <button
               type="button"
-              onClick={() => handleDemoLogin('Capataz a Campo', 'capataz@campo360.com')}
+              onClick={() => handleDemoLogin('Capataz a Campo', 'capataz@landa360.com')}
               className="p-2.5 rounded-xl bg-campo-blanco hover:bg-campo-arena border border-campo-borde text-left transition-colors"
             >
               <span className="text-[11px] font-bold text-campo-texto block">Capataz</span>

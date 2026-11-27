@@ -325,7 +325,7 @@ export function OnboardingWizard({ onComplete }: OnboardingProps) {
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Activar Mi Campo360</span>
+                <span>Activar Mi Landa360</span>
               </>
             )}
           </button>

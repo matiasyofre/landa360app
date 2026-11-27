@@ -2,7 +2,7 @@
   # 1. HSTS (Fuerza TLS 1.3 Cifrado por 1 año)
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
 
-  # 2. Anti-Clickjacking (Prohíbe embeber Campo360 en iframes externos)
+  # 2. Anti-Clickjacking (Prohíbe embeber Landa360 en iframes externos)
   X-Frame-Options: DENY
 
   # 3. Anti-MIME Sniffing (Evita interpretar texto como ejecutables)

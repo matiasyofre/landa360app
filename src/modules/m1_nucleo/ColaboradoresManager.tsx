@@ -67,7 +67,7 @@ export function ColaboradoresManager() {
         setColaboradores([
           {
             id: 'usr_owner',
-            email: 'administrador@campo360.com',
+            email: 'administrador@landa360.com',
             nombreCompleto: 'Dueño / Administrador',
             rolId: 'rol_dueno',
             rolNombre: 'Dueño / Administrador',
@@ -81,7 +81,7 @@ export function ColaboradoresManager() {
       setColaboradores([
         {
           id: 'usr_owner',
-          email: 'administrador@campo360.com',
+          email: 'administrador@landa360.com',
           nombreCompleto: 'Dueño / Administrador',
           rolId: 'rol_dueno',
           rolNombre: 'Dueño / Administrador',
