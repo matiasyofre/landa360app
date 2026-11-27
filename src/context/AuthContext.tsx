@@ -91,13 +91,8 @@ const ROLES_PREDETERMINADOS = (tenantId: string): Rol[] => [
 ];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserSession | null>(() => {
-    const saved = localStorage.getItem('campo360_active_user');
-    if (saved) {
-      try { return JSON.parse(saved); } catch { return null; }
-    }
-    return null;
-  });
+  // Inicializa en null para forzar la pantalla de Login siempre si no hay sesión real de Supabase
+  const [user, setUser] = useState<UserSession | null>(null);
 
   const [tenant, setTenantState] = useState<TenantRecord | null>(() => {
     const saved = localStorage.getItem('campo360_active_tenant');
@@ -123,10 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             nombreCompleto: session.user.user_metadata?.nombre_completo || session.user.email?.split('@')[0] || 'Usuario'
           };
           setUser(authUser);
-          localStorage.setItem('campo360_active_user', JSON.stringify(authUser));
+        } else {
+          // Si no hay sesión real activa en Supabase, forzar null y limpiar almacenamiento previo
+          setUser(null);
+          localStorage.removeItem('campo360_active_user');
         }
       } catch (err) {
         console.warn('Error al verificar sesión de Supabase:', err);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }

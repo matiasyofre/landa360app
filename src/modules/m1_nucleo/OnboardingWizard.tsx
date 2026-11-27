@@ -11,7 +11,8 @@ import {
   Tractor,
   Layers,
   Clock,
-  Loader2
+  Loader2,
+  LogOut
 } from 'lucide-react';
 
 interface OnboardingProps {
@@ -19,7 +20,7 @@ interface OnboardingProps {
 }
 
 export function OnboardingWizard({ onComplete }: OnboardingProps) {
-  const { setTenant } = useAuth();
+  const { setTenant, logout } = useAuth();
   const [paso, setPaso] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -95,22 +96,33 @@ export function OnboardingWizard({ onComplete }: OnboardingProps) {
           </p>
         </div>
 
-        {/* Indicador de Pasos */}
-        <div className="flex items-center gap-2">
-          {[1, 2, 3].map((p) => (
-            <div
-              key={p}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all ${
-                paso === p
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-105'
-                  : paso > p
-                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                  : 'bg-slate-800 text-slate-500'
-              }`}
-            >
-              {paso > p ? <CheckCircle2 className="w-4 h-4" /> : p}
-            </div>
-          ))}
+        {/* Indicador de Pasos y Salir */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {[1, 2, 3].map((p) => (
+              <div
+                key={p}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center font-mono text-xs font-bold transition-all ${
+                  paso === p
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-105'
+                    : paso > p
+                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                    : 'bg-slate-800 text-slate-500'
+                }`}
+              >
+                {paso > p ? <CheckCircle2 className="w-4 h-4" /> : p}
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={logout}
+            title="Cerrar sesión y volver al Login"
+            className="p-2 rounded-lg bg-slate-950 text-slate-400 hover:text-red-400 hover:bg-red-950/40 border border-slate-800 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
