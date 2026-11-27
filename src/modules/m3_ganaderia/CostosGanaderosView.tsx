@@ -67,10 +67,12 @@ export const CostosGanaderosView: React.FC<Props> = ({ canViewFinancials = true 
   // Cálculos de costo por kilo
   const totalCostosUSD = costos.reduce((acc, c) => acc + c.monto_usd, 0);
   const totalCostosARS = costos.reduce((acc, c) => acc + c.monto_ars, 0);
-  // Estimación de kilos ganados (ej. 1850 kg en el período)
-  const kilosGanadosEstimados = 2450;
-  const costoPorKiloUSD = kilosGanadosEstimados > 0 ? (totalCostosUSD / kilosGanadosEstimados).toFixed(2) : '0.00';
-  const costoPorKiloARS = kilosGanadosEstimados > 0 ? (totalCostosARS / kilosGanadosEstimados).toFixed(1) : '0.0';
+  const pesadas = ganaderiaService.getPesadas();
+  const kilosGanadosReales = pesadas
+    .filter(p => p.peso_anterior_kg && p.peso_kg > p.peso_anterior_kg)
+    .reduce((acc, p) => acc + (p.peso_kg - (p.peso_anterior_kg || 0)), 0);
+  const costoPorKiloUSD = kilosGanadosReales > 0 ? (totalCostosUSD / kilosGanadosReales).toFixed(2) : '0.00';
+  const costoPorKiloARS = kilosGanadosReales > 0 ? (totalCostosARS / kilosGanadosReales).toFixed(1) : '0.0';
 
   return (
     <div className="space-y-6">
@@ -130,7 +132,7 @@ export const CostosGanaderosView: React.FC<Props> = ({ canViewFinancials = true 
           <div>
             <p className="text-xs font-semibold text-[#74796D] uppercase">Kilos Producidos Período</p>
             <p className="text-2xl font-bold font-mono text-[#536747]">
-              {kilosGanadosEstimados.toLocaleString()} <span className="text-xs font-normal text-[#74796D]">kg carne</span>
+              {kilosGanadosReales.toLocaleString()} <span className="text-xs font-normal text-[#74796D]">kg carne</span>
             </p>
           </div>
         </div>

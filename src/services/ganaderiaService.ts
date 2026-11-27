@@ -1,6 +1,7 @@
 // ==============================================================================
 // LANDA360: SERVICIO INTEGRADO DE GANADERÍA & RFID
-// Manejo de catálogos paramétricos, inventario, cálculos EV/ha, GDP, parser RFID
+// Manejo de catálogos paramétricos, inventario real, cálculos EV/ha, GDP y
+// Parser de alta compatibilidad para bastones y balanzas Tru-Test oficiales
 // ==============================================================================
 
 import {
@@ -14,7 +15,8 @@ import {
   PesadaAnimal,
   EventoSanitario,
   CostoGanadero,
-  InconsistenciaGanadera
+  InconsistenciaGanadera,
+  LecturaRFID
 } from '../types/ganaderia';
 
 const STORAGE_KEY_CATEGORIAS = 'landa360_ganaderia_categorias';
@@ -28,29 +30,25 @@ const STORAGE_KEY_PESADAS = 'landa360_ganaderia_pesadas';
 const STORAGE_KEY_SANIDAD = 'landa360_ganaderia_sanidad';
 const STORAGE_KEY_COSTOS = 'landa360_ganaderia_costos';
 
-// Semillas por defecto para nuevos establecimientos
+// Catálogos Paramétricos Base (Sin datos mock de animales)
 const DEFAULT_CATEGORIAS: CategoriaGanadera[] = [
   { id: 'cat-1', tenant_id: 'default', nombre: 'Vaca de Cría', sexo: 'Hembra', factor_ev: 1.00, peso_referencia_kg: 420, activo: true },
-  { id: 'cat-2', tenant_id: 'default', nombre: 'Vaquillona 1 a 2 años', sexo: 'Hembra', factor_ev: 0.75, peso_referencia_kg: 320, activo: true },
-  { id: 'cat-3', tenant_id: 'default', nombre: 'Ternero al pie', sexo: 'Indefinido', factor_ev: 0.35, peso_referencia_kg: 140, activo: true },
-  { id: 'cat-4', tenant_id: 'default', nombre: 'Ternero destetado', sexo: 'Macho', factor_ev: 0.50, peso_referencia_kg: 190, activo: true },
-  { id: 'cat-5', tenant_id: 'default', nombre: 'Novillito 1 a 2 años', sexo: 'Macho', factor_ev: 0.75, peso_referencia_kg: 340, activo: true },
-  { id: 'cat-6', tenant_id: 'default', nombre: 'Novillo > 2 años', sexo: 'Macho', factor_ev: 1.00, peso_referencia_kg: 460, activo: true },
-  { id: 'cat-7', tenant_id: 'default', nombre: 'Toro reproductor', sexo: 'Macho', factor_ev: 1.50, peso_referencia_kg: 750, activo: true },
+  { id: 'cat-2', tenant_id: 'default', nombre: 'Vaquillona', sexo: 'Hembra', factor_ev: 0.75, peso_referencia_kg: 320, activo: true },
+  { id: 'cat-3', tenant_id: 'default', nombre: 'Ternero / Ternera', sexo: 'Indefinido', factor_ev: 0.40, peso_referencia_kg: 160, activo: true },
+  { id: 'cat-4', tenant_id: 'default', nombre: 'Novillito', sexo: 'Macho', factor_ev: 0.75, peso_referencia_kg: 340, activo: true },
+  { id: 'cat-5', tenant_id: 'default', nombre: 'Novillo', sexo: 'Macho', factor_ev: 1.00, peso_referencia_kg: 460, activo: true },
+  { id: 'cat-6', tenant_id: 'default', nombre: 'Toro', sexo: 'Macho', factor_ev: 1.50, peso_referencia_kg: 750, activo: true },
 ];
 
 const DEFAULT_RODEOS: Rodeo[] = [
-  { id: 'rod-1', tenant_id: 'default', nombre: 'Rodeo Cría General', finalidad: 'Cría', color_identificador: '#83A653', activo: true },
-  { id: 'rod-2', tenant_id: 'default', nombre: 'Invernada Lote 1', finalidad: 'Invernada / Engorde', color_identificador: '#536747', activo: true },
+  { id: 'rod-1', tenant_id: 'default', nombre: 'Rodeo General', finalidad: 'Cría', color_identificador: '#83A653', activo: true },
+  { id: 'rod-2', tenant_id: 'default', nombre: 'Invernada', finalidad: 'Invernada / Engorde', color_identificador: '#536747', activo: true },
   { id: 'rod-3', tenant_id: 'default', nombre: 'Vaquillonas Reposición', finalidad: 'Recría', color_identificador: '#B6A77D', activo: true },
-  { id: 'rod-4', tenant_id: 'default', nombre: 'Torada Cabaña', finalidad: 'Cabaña', color_identificador: '#24382C', activo: true },
 ];
 
 const DEFAULT_POTREROS: PotreroGanadero[] = [
-  { id: 'pot-1', tenant_id: 'default', nombre: 'Potrero 1 - La Legua', superficie_ha: 120, recurso_forrajero: 'Pastura Alfalfa / Festuca', receptividad_objetivo_ev_ha: 1.20, dias_descanso_actual: 32, activo: true },
-  { id: 'pot-2', tenant_id: 'default', nombre: 'Potrero 2 - El Bajo', superficie_ha: 85, recurso_forrajero: 'Agropiro / Festuca', receptividad_objetivo_ev_ha: 0.85, dias_descanso_actual: 14, activo: true },
-  { id: 'pot-3', tenant_id: 'default', nombre: 'Potrero 3 - Loma Norte', superficie_ha: 140, recurso_forrajero: 'Campo Natural Mejorado', receptividad_objetivo_ev_ha: 0.65, dias_descanso_actual: 45, activo: true },
-  { id: 'pot-4', tenant_id: 'default', nombre: 'Potrero 4 - Las Acacias', superficie_ha: 95, recurso_forrajero: 'Verdeo Invierno (Avena/Vicia)', receptividad_objetivo_ev_ha: 1.50, dias_descanso_actual: 5, activo: true },
+  { id: 'pot-1', tenant_id: 'default', nombre: 'Potrero 1', superficie_ha: 100, recurso_forrajero: 'Pastura Cultivada', receptividad_objetivo_ev_ha: 1.00, dias_descanso_actual: 0, activo: true },
+  { id: 'pot-2', tenant_id: 'default', nombre: 'Potrero 2', superficie_ha: 80, recurso_forrajero: 'Campo Natural', receptividad_objetivo_ev_ha: 0.70, dias_descanso_actual: 0, activo: true },
 ];
 
 const DEFAULT_RAZAS: RazaGanadera[] = [
@@ -64,19 +62,19 @@ const DEFAULT_RAZAS: RazaGanadera[] = [
 const DEFAULT_FARMACOS: FarmacoVeterinario[] = [
   { id: 'far-1', tenant_id: 'default', nombre_comercial: 'Aftosa Bivalente Oficial', principio_activo: 'Virus inactivado Aftosa', tipo: 'Vacuna', dias_carencia_faena: 0, dosis_sugerida: '2 ml vía subcutánea', activo: true },
   { id: 'far-2', tenant_id: 'default', nombre_comercial: 'Carbunclo Cepa Pasteur', principio_activo: 'Bacillus anthracis vivo atenuado', tipo: 'Vacuna', dias_carencia_faena: 0, dosis_sugerida: '2 ml SC', activo: true },
-  { id: 'far-3', tenant_id: 'default', nombre_comercial: 'Ivermectina 3.15% Larga Acción', principio_activo: 'Ivermectina', tipo: 'Antiparasitario', dias_carencia_faena: 48, dosis_sugerida: '1 ml cada 50 kg', activo: true },
-  { id: 'far-4', tenant_id: 'default', nombre_comercial: 'Complejo Vitamínico ADE', principio_activo: 'Vit A, D3, E', tipo: 'Vitamínico / Mineral', dias_carencia_faena: 0, dosis_sugerida: '5 ml SC', activo: true },
-];
-
-const DEFAULT_ANIMALES: Animal[] = [
-  { id: 'ani-1', tenant_id: 'default', caravana_rfid: '982000412891001', caravana_visual: 'A-101', categoria_id: 'cat-1', categoria_nombre: 'Vaca de Cría', factor_ev: 1.00, rodeo_id: 'rod-1', rodeo_nombre: 'Rodeo Cría General', potrero_id: 'pot-1', potrero_nombre: 'Potrero 1 - La Legua', raza: 'Angus Negro', sexo: 'Hembra', fecha_nacimiento: '2021-09-15', peso_actual_kg: 442, fecha_ultima_pesada: '2026-10-15', gdp_historica_kg_dia: 0.450, estado: 'Activo', origen: 'Propio (Nacido)' },
-  { id: 'ani-2', tenant_id: 'default', caravana_rfid: '982000412891002', caravana_visual: 'A-102', categoria_id: 'cat-1', categoria_nombre: 'Vaca de Cría', factor_ev: 1.00, rodeo_id: 'rod-1', rodeo_nombre: 'Rodeo Cría General', potrero_id: 'pot-1', potrero_nombre: 'Potrero 1 - La Legua', raza: 'Angus Negro', sexo: 'Hembra', fecha_nacimiento: '2021-10-02', peso_actual_kg: 428, fecha_ultima_pesada: '2026-10-15', gdp_historica_kg_dia: 0.380, estado: 'Activo', origen: 'Propio (Nacido)' },
-  { id: 'ani-3', tenant_id: 'default', caravana_rfid: '982000412891003', caravana_visual: 'N-201', categoria_id: 'cat-5', categoria_nombre: 'Novillito 1 a 2 años', factor_ev: 0.75, rodeo_id: 'rod-2', rodeo_nombre: 'Invernada Lote 1', potrero_id: 'pot-2', potrero_nombre: 'Potrero 2 - El Bajo', raza: 'Angus Colorado', sexo: 'Macho', fecha_nacimiento: '2025-04-10', peso_actual_kg: 358, fecha_ultima_pesada: '2026-11-01', gdp_historica_kg_dia: 0.780, estado: 'Activo', origen: 'Propio (Nacido)' },
-  { id: 'ani-4', tenant_id: 'default', caravana_rfid: '982000412891004', caravana_visual: 'N-202', categoria_id: 'cat-5', categoria_nombre: 'Novillito 1 a 2 años', factor_ev: 0.75, rodeo_id: 'rod-2', rodeo_nombre: 'Invernada Lote 1', potrero_id: 'pot-2', potrero_nombre: 'Potrero 2 - El Bajo', raza: 'Angus Colorado', sexo: 'Macho', fecha_nacimiento: '2025-04-12', peso_actual_kg: 364, fecha_ultima_pesada: '2026-11-01', gdp_historica_kg_dia: 0.810, estado: 'Activo', origen: 'Propio (Nacido)' },
-  { id: 'ani-5', tenant_id: 'default', caravana_rfid: '982000412891005', caravana_visual: 'T-01', categoria_id: 'cat-7', categoria_nombre: 'Toro reproductor', factor_ev: 1.50, rodeo_id: 'rod-4', rodeo_nombre: 'Torada Cabaña', potrero_id: 'pot-4', potrero_nombre: 'Potrero 4 - Las Acacias', raza: 'Brangus', sexo: 'Macho', fecha_nacimiento: '2022-08-20', peso_actual_kg: 785, fecha_ultima_pesada: '2026-09-20', gdp_historica_kg_dia: 0.200, estado: 'Activo', origen: 'Compra' },
+  { id: 'far-3', tenant_id: 'default', nombre_comercial: 'Ivermectina 3.15%', principio_activo: 'Ivermectina', tipo: 'Antiparasitario', dias_carencia_faena: 48, dosis_sugerida: '1 ml cada 50 kg', activo: true },
 ];
 
 export const ganaderiaService = {
+  // --- LIMPIEZA TOTAL DE DATOS MOCK O DE PRUEBA ---
+  limpiarDatosDePrueba() {
+    localStorage.removeItem(STORAGE_KEY_ANIMALES);
+    localStorage.removeItem(STORAGE_KEY_PESADAS);
+    localStorage.removeItem(STORAGE_KEY_MOVIMIENTOS);
+    localStorage.removeItem(STORAGE_KEY_COSTOS);
+    localStorage.removeItem(STORAGE_KEY_SANIDAD);
+  },
+
   // --- MAESTROS PARAMÉTRICOS ---
   getCategorias(): CategoriaGanadera[] {
     const data = localStorage.getItem(STORAGE_KEY_CATEGORIAS);
@@ -137,7 +135,7 @@ export const ganaderiaService = {
     const potreros: PotreroGanadero[] = data ? JSON.parse(data) : DEFAULT_POTREROS;
     if (!data) localStorage.setItem(STORAGE_KEY_POTREROS, JSON.stringify(DEFAULT_POTREROS));
 
-    // Calcular en caliente carga EV, cabezas y EV/ha (FN-3.2)
+    // Calcular carga EV, cabezas y EV/ha
     const animales = this.getAnimales().filter(a => a.estado === 'Activo');
     return potreros.map(pot => {
       const animalesEnPotrero = animales.filter(a => a.potrero_id === pot.id);
@@ -220,12 +218,16 @@ export const ganaderiaService = {
     return list;
   },
 
-  // --- ANIMALES & TRAZABILIDAD (FN-3.1, FN-3.7) ---
+  // --- ANIMALES & TRAZABILIDAD (100% LIMPIO, CERO MOCK) ---
   getAnimales(): Animal[] {
     const data = localStorage.getItem(STORAGE_KEY_ANIMALES);
     if (!data) {
-      localStorage.setItem(STORAGE_KEY_ANIMALES, JSON.stringify(DEFAULT_ANIMALES));
-      return DEFAULT_ANIMALES;
+      return [];
+    }
+    // Si contiene semillas mock antiguas (ani-1), limpiar completamente
+    if (data.includes('ani-1') || data.includes('A-101') || data.includes('982000412891001')) {
+      this.limpiarDatosDePrueba();
+      return [];
     }
     return JSON.parse(data);
   },
@@ -248,7 +250,12 @@ export const ganaderiaService = {
       potrero_nombre: pot ? pot.nombre : animal.potrero_nombre,
     };
 
-    const idx = list.findIndex(a => a.id === animal.id || (animal.caravana_rfid && a.caravana_rfid === animal.caravana_rfid));
+    const idx = list.findIndex(a =>
+      a.id === animal.id ||
+      (animal.caravana_rfid && a.caravana_rfid && a.caravana_rfid.replace(/\s+/g, '') === animal.caravana_rfid.replace(/\s+/g, '')) ||
+      (animal.caravana_visual && a.caravana_visual === animal.caravana_visual)
+    );
+
     if (idx >= 0) {
       list[idx] = { ...list[idx], ...enriched };
     } else {
@@ -291,7 +298,7 @@ export const ganaderiaService = {
     list.unshift(nuevo);
     localStorage.setItem(STORAGE_KEY_MOVIMIENTOS, JSON.stringify(list));
 
-    // Actualizar potrero de todos los animales pertenecientes al rodeo
+    // Actualizar potrero de los animales del rodeo
     const animales = this.getAnimales();
     const actualizados = animales.map(a => {
       if (a.rodeo_id === mov.rodeo_id) {
@@ -311,10 +318,24 @@ export const ganaderiaService = {
   // --- PESADAS & GANANCIA DIARIA DE PESO (GDP) (FN-3.6) ---
   getPesadas(): PesadaAnimal[] {
     const data = localStorage.getItem(STORAGE_KEY_PESADAS);
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+    if (data.includes('ani-1')) {
+      localStorage.removeItem(STORAGE_KEY_PESADAS);
+      return [];
+    }
+    return JSON.parse(data);
   },
 
-  registrarPesada(item: { animal_id: string; fecha: string; peso_kg: number; origen_pesada: string; observaciones?: string }): PesadaAnimal {
+  registrarPesada(item: {
+    animal_id: string;
+    fecha: string;
+    hora?: string;
+    peso_kg: number;
+    condicion_corporal?: number;
+    tacto?: string;
+    origen_pesada: string;
+    observaciones?: string;
+  }): PesadaAnimal {
     const pesadas = this.getPesadas();
     const animales = this.getAnimales();
     const animal = animales.find(a => a.id === item.animal_id);
@@ -337,7 +358,7 @@ export const ganaderiaService = {
     let diasTranscurridos = 0;
     let gdp = 0;
 
-    if (fechaAnterior) {
+    if (fechaAnterior && pesoAnterior > 0) {
       const d1 = new Date(fechaAnterior).getTime();
       const d2 = new Date(item.fecha).getTime();
       diasTranscurridos = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)));
@@ -345,16 +366,19 @@ export const ganaderiaService = {
     }
 
     const nuevaPesada: PesadaAnimal = {
-      id: `pes-${Date.now()}`,
+      id: `pes-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       tenant_id: 'default',
       animal_id: animal.id,
       caravana_visual: animal.caravana_visual,
       caravana_rfid: animal.caravana_rfid,
       fecha: item.fecha,
+      hora: item.hora,
       peso_kg: item.peso_kg,
-      peso_anterior_kg: pesoAnterior,
-      dias_transcurridos: diasTranscurridos,
-      gdp_kg_dia: gdp,
+      peso_anterior_kg: pesoAnterior > 0 ? pesoAnterior : undefined,
+      dias_transcurridos: diasTranscurridos > 0 ? diasTranscurridos : undefined,
+      gdp_kg_dia: gdp !== 0 ? gdp : undefined,
+      condicion_corporal: item.condicion_corporal,
+      tacto: item.tacto,
       origen_pesada: item.origen_pesada,
       observaciones: item.observaciones
     };
@@ -362,100 +386,129 @@ export const ganaderiaService = {
     pesadas.unshift(nuevaPesada);
     localStorage.setItem(STORAGE_KEY_PESADAS, JSON.stringify(pesadas));
 
-    // Actualizar animal con su última pesada y GDP
+    // Actualizar animal
     animal.peso_actual_kg = item.peso_kg;
     animal.fecha_ultima_pesada = item.fecha;
+    if (item.hora) animal.hora_ultima_pesada = item.hora;
+    if (item.condicion_corporal) animal.condicion_corporal = item.condicion_corporal;
+    if (item.tacto) animal.tacto = item.tacto;
     if (gdp !== 0) animal.gdp_historica_kg_dia = gdp;
     this.saveAnimal(animal);
 
     return nuevaPesada;
   },
 
-  // --- PARSER HEURÍSTICO DE BASTÓN RFID (FN-3.4) & INCONSISTENCIAS (FN-3.5) ---
+  // --- PARSER OFICIAL Y HEURÍSTICO TRU-TEST (FN-3.4 & FN-3.5) ---
+  // Diseñado para coincidir exactamente con Sesion4.csv y COLOC_VQ.csv
   parsearLecturaBastones(csvContent: string): {
-    lecturas: { rfid?: string; visual?: string; peso?: number; fecha?: string }[];
+    lecturas: LecturaRFID[];
     inconsistencias: InconsistenciaGanadera[];
   } {
-    const lineas = csvContent.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+    // 1. Limpieza de BOM y líneas
+    const cleanContent = csvContent.replace(/^\uFEFF/, '').trim();
+    const lineas = cleanContent.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
     if (lineas.length === 0) return { lecturas: [], inconsistencias: [] };
 
-    // Determinar separador (, ; \t)
+    // 2. Determinar separador
     const primera = lineas[0];
     let sep = ',';
     if (primera.includes(';') && (primera.match(/;/g)?.length || 0) >= (primera.match(/,/g)?.length || 0)) sep = ';';
     else if (primera.includes('\t')) sep = '\t';
 
-    const encabezados = primera.split(sep).map(h => h.trim().toLowerCase().replace(/["']/g, ''));
+    // 3. Normalizar encabezados (quitar comillas, tildes y espacios)
+    const normalizeHeader = (str: string) =>
+      str.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/["']/g, '')
+        .trim();
 
-    // Heurística de columnas
-    const idxRfid = encabezados.findIndex(h => /rfid|eid|chip|tag|transponder|electronic/i.test(h));
-    const idxVisual = encabezados.findIndex(h => /visual|caravana|arete|chapa|id/i.test(h) && h !== 'rfid');
-    const idxPeso = encabezados.findIndex(h => /peso|weight|kg|kilos/i.test(h));
-    const idxFecha = encabezados.findIndex(h => /fecha|date|time|hora/i.test(h));
+    const encabezados = primera.split(sep).map(normalizeHeader);
+
+    // Mapeo exacto de columnas Tru-Test
+    // EID, VID, Date, Time, ADVERTENCIA, CONDICIÓN, TACTO, NOTA
+    const idxEid = encabezados.findIndex(h => /^(eid|rfid|chip|tag|transponder)$/.test(h) || h.includes('eid') || h.includes('rfid'));
+    const idxVid = encabezados.findIndex(h => /^(vid|visual|caravana|arete)$/.test(h) || h.includes('vid') || h.includes('visual'));
+    const idxDate = encabezados.findIndex(h => /^(date|fecha)$/.test(h));
+    const idxTime = encabezados.findIndex(h => /^(time|hora)$/.test(h));
+    const idxPeso = encabezados.findIndex(h => /^(peso|weight|kg|kilos)$/.test(h));
+    const idxCondicion = encabezados.findIndex(h => h.includes('condicion') || h === 'cc');
+    const idxTacto = encabezados.findIndex(h => h.includes('tacto') || h.includes('reprod') || h.includes('prenez'));
+    const idxAdvertencia = encabezados.findIndex(h => h.includes('advertencia') || h.includes('alerta') || h.includes('warning'));
+    const idxNota = encabezados.findIndex(h => /^(nota|note|observaciones|notas)$/.test(h));
 
     const animalesExistentes = this.getAnimales();
-    const lecturas: { rfid?: string; visual?: string; peso?: number; fecha?: string }[] = [];
+    const lecturas: LecturaRFID[] = [];
     const inconsistencias: InconsistenciaGanadera[] = [];
-    const rfidVistos = new Set<string>();
+    const eidVistos = new Set<string>();
 
-    const startIdx = idxRfid >= 0 || idxVisual >= 0 || idxPeso >= 0 ? 1 : 0;
+    const startIdx = idxEid >= 0 || idxVid >= 0 ? 1 : 0;
 
     for (let i = startIdx; i < lineas.length; i++) {
-      const cols = lineas[i].split(sep).map(c => c.trim().replace(/["']/g, ''));
+      const rawCols = lineas[i].split(sep);
+      const cols = rawCols.map(c => c.trim().replace(/^["']|["']$/g, ''));
       if (cols.length < 2) continue;
 
-      let rfid = idxRfid >= 0 && cols[idxRfid] ? cols[idxRfid] : undefined;
-      let visual = idxVisual >= 0 && cols[idxVisual] ? cols[idxVisual] : undefined;
-      let pesoRaw = idxPeso >= 0 && cols[idxPeso] ? cols[idxPeso].replace(',', '.') : undefined;
-      let fechaRaw = idxFecha >= 0 && cols[idxFecha] ? cols[idxFecha] : new Date().toISOString().split('T')[0];
+      const eidRaw = idxEid >= 0 ? cols[idxEid] : cols[0];
+      const vidRaw = idxVid >= 0 ? cols[idxVid] : cols[1];
+      const dateRaw = idxDate >= 0 && cols[idxDate] ? cols[idxDate] : new Date().toISOString().split('T')[0];
+      const timeRaw = idxTime >= 0 ? cols[idxTime] : undefined;
+      const advRaw = idxAdvertencia >= 0 ? cols[idxAdvertencia] : undefined;
+      const tactoRaw = idxTacto >= 0 && cols[idxTacto] ? cols[idxTacto].toUpperCase() : undefined;
+      const condRaw = idxCondicion >= 0 && cols[idxCondicion] ? parseInt(cols[idxCondicion]) : undefined;
+      const notaRaw = idxNota >= 0 ? cols[idxNota] : undefined;
 
-      // Si no detectó encabezados, asignación posicional heurística
-      if (idxRfid === -1 && idxVisual === -1 && idxPeso === -1) {
-        // Tru-Test típicamente: Col 0: RFID (15 dígitos), Col 1: Visual, Col 2: Peso
-        if (/^\d{12,16}$/.test(cols[0])) {
-          rfid = cols[0];
-          visual = cols[1];
-          pesoRaw = cols[2];
-        } else {
-          visual = cols[0];
-          pesoRaw = cols[1];
+      // Sanitizar EID y VID
+      const eid = eidRaw ? eidRaw.trim() : '';
+      const vid = vidRaw ? vidRaw.trim() : (eid ? `CAR-${eid.slice(-4)}` : `V-${i}`);
+
+      // LÓGICA DE DETECCIÓN DE PESO:
+      // En Tru-Test (como en Sesion4.csv), el peso a menudo se almacena en la columna NOTA
+      // Ejemplo: "290", "260", "2 10" (con espacio tipográfico), etc.
+      let pesoDetectado: number | undefined = undefined;
+      let notaTexto: string | undefined = notaRaw;
+
+      if (idxPeso >= 0 && cols[idxPeso]) {
+        const val = parseFloat(cols[idxPeso].replace(/\s+/g, '').replace(',', '.'));
+        if (!isNaN(val) && val > 0) pesoDetectado = val;
+      } else if (notaRaw) {
+        // Limpiar espacios en números como "2 10" -> "210"
+        const cleanNota = notaRaw.replace(/\s+/g, '').replace(',', '.');
+        const numVal = parseFloat(cleanNota);
+        // Si es un número válido entre 30 y 1500, corresponde al peso de la manga
+        if (!isNaN(numVal) && numVal >= 30 && numVal <= 1500) {
+          pesoDetectado = numVal;
+          notaTexto = undefined; // El valor era el peso
         }
       }
 
-      const peso = pesoRaw ? parseFloat(pesoRaw) : undefined;
-      const keyId = rfid || visual || `Fila-${i + 1}`;
-
-      // Auditoría FN-3.5: Duplicados en la misma planilla
-      if (rfid && rfidVistos.has(rfid)) {
+      // Validar Duplicados en la misma planilla (FN-3.5)
+      const eidKey = eid.replace(/\s+/g, '');
+      if (eidKey && eidVistos.has(eidKey)) {
         inconsistencias.push({
           tipo: 'DUPLICADO',
           gravedad: 'ALTA',
-          caravana: keyId,
-          descripcion: `La caravana RFID ${rfid} se leyó más de una vez en esta pasada de manga.`,
+          caravana: eid || vid,
+          descripcion: `La caravana RFID / EID ${eid} se leyó más de una vez en esta sesión de manga.`,
           fila: i + 1
         });
       }
-      if (rfid) rfidVistos.add(rfid);
+      if (eidKey) eidVistos.add(eidKey);
 
-      // Auditoría FN-3.5: Salto biológicamente incoherente de peso
-      if (peso) {
-        const animalPrevio = animalesExistentes.find(a => (rfid && a.caravana_rfid === rfid) || (visual && a.caravana_visual === visual));
+      // Validar saltos de peso anómalos
+      if (pesoDetectado) {
+        const animalPrevio = animalesExistentes.find(a =>
+          (eidKey && a.caravana_rfid?.replace(/\s+/g, '') === eidKey) ||
+          (vid && a.caravana_visual === vid)
+        );
         if (animalPrevio && animalPrevio.peso_actual_kg > 0) {
-          const deltaPeso = peso - animalPrevio.peso_actual_kg;
-          if (deltaPeso < -40) {
+          const delta = pesoDetectado - animalPrevio.peso_actual_kg;
+          if (delta < -45) {
             inconsistencias.push({
               tipo: 'SALTO_PESO',
               gravedad: 'ALTA',
-              caravana: keyId,
-              descripcion: `Pérdida drástica de peso detectada (${deltaPeso.toFixed(1)} kg) respecto a la pesada anterior (${animalPrevio.peso_actual_kg} kg). Posible error de balanza o enfermedad severa.`,
-              fila: i + 1
-            });
-          } else if (deltaPeso > 80) {
-            inconsistencias.push({
-              tipo: 'SALTO_PESO',
-              gravedad: 'MEDIA',
-              caravana: keyId,
-              descripcion: `Ganancia extraordinaria de peso (+${deltaPeso.toFixed(1)} kg) respecto al registro histórico (${animalPrevio.peso_actual_kg} kg).`,
+              caravana: vid,
+              descripcion: `Pérdida drástica de peso (${delta.toFixed(1)} kg) respecto a la pesada histórica (${animalPrevio.peso_actual_kg} kg).`,
               fila: i + 1
             });
           }
@@ -463,10 +516,15 @@ export const ganaderiaService = {
       }
 
       lecturas.push({
-        rfid,
-        visual: visual || (rfid ? `CAR-${rfid.slice(-4)}` : undefined),
-        peso,
-        fecha: fechaRaw
+        eid,
+        vid,
+        fecha: dateRaw,
+        hora: timeRaw,
+        peso: pesoDetectado,
+        condicion: !isNaN(Number(condRaw)) ? condRaw : undefined,
+        tacto: tactoRaw,
+        advertencia: advRaw,
+        nota: notaTexto
       });
     }
 
@@ -503,14 +561,15 @@ export const ganaderiaService = {
     return nuevo;
   },
 
-  // --- COSTOS GANADEROS & $/KG (FN-3.9) ---
+  // --- COSTOS GANADEROS (FN-3.9) - CERO MOCK ---
   getCostos(): CostoGanadero[] {
     const data = localStorage.getItem(STORAGE_KEY_COSTOS);
-    return data ? JSON.parse(data) : [
-      { id: 'cst-1', tenant_id: 'default', fecha: '2026-10-10', rodeo_id: 'rod-2', rodeo_nombre: 'Invernada Lote 1', rubro: 'Alimentación y Pasturas', monto_usd: 1250, monto_ars: 1562500, descripcion: 'Rollos de alfalfa y suplemento mineral proteico' },
-      { id: 'cst-2', tenant_id: 'default', fecha: '2026-10-25', rodeo_id: 'rod-1', rodeo_nombre: 'Rodeo Cría General', rubro: 'Sanidad y Veterinaria', monto_usd: 480, monto_ars: 600000, descripcion: 'Campaña Oficial de Vacunación Aftosa y Carbunclo' },
-      { id: 'cst-3', tenant_id: 'default', fecha: '2026-11-05', rodeo_id: 'rod-2', rodeo_nombre: 'Invernada Lote 1', rubro: 'Manga y Personal', monto_usd: 350, monto_ars: 437500, descripcion: 'Jornal de pesada periódica y lectura RFID' }
-    ];
+    if (!data) return [];
+    if (data.includes('cst-1')) {
+      localStorage.removeItem(STORAGE_KEY_COSTOS);
+      return [];
+    }
+    return JSON.parse(data);
   },
 
   saveCosto(costo: CostoGanadero): CostoGanadero[] {

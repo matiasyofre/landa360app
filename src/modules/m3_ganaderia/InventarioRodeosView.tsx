@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { ganaderiaService } from '../../services/ganaderiaService';
 import { Animal, CategoriaGanadera, Rodeo } from '../../types/ganaderia';
-import { Users, Filter, Plus, ShieldAlert, Award } from 'lucide-react';
+import { Users, Filter, Plus, ShieldAlert, Award, Trash2 } from 'lucide-react';
 
 interface Props {
   onSelectAnimal?: (animal: Animal) => void;
@@ -21,6 +21,14 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
   const [filtroRodeo, setFiltroRodeo] = useState<string>('todos');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todos');
   const [filtroBusqueda, setFiltroBusqueda] = useState<string>('');
+
+  const handleLimpiarBase = () => {
+    if (window.confirm('¿Está seguro de que desea eliminar todos los animales y pesadas registradas? Esta acción dejará el inventario en 0.')) {
+      ganaderiaService.limpiarDatosDePrueba();
+      setAnimales([]);
+      onRefresh?.();
+    }
+  };
 
   // Modal Alta Rápida de Animal
   const [modalAlta, setModalAlta] = useState(false);
@@ -173,13 +181,26 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
           </select>
         </div>
 
-        <button
-          onClick={() => setModalAlta(true)}
-          className="w-full md:w-auto flex items-center justify-center gap-1.5 bg-[#83A653] hover:bg-[#536747] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Registrar Animal
-        </button>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          {animales.length > 0 && (
+            <button
+              onClick={handleLimpiarBase}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 border border-[#C65B50]/30 text-[#C65B50] hover:bg-[#C65B50]/10 text-xs font-semibold rounded-xl transition-all"
+              title="Vaciar inventario y resetear datos"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Vaciar Datos
+            </button>
+          )}
+
+          <button
+            onClick={() => setModalAlta(true)}
+            className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-[#83A653] hover:bg-[#536747] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Registrar Animal
+          </button>
+        </div>
       </div>
 
       {/* TABLA PRINCIPAL DE INVENTARIO */}
@@ -200,51 +221,81 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
                 <th className="py-3 px-4">Categoría</th>
                 <th className="py-3 px-4">Rodeo</th>
                 <th className="py-3 px-4">Potrero Actual</th>
-                <th className="py-3 px-4">Raza / Sexo</th>
+                <th className="py-3 px-4 text-center">Condición</th>
+                <th className="py-3 px-4">Tacto</th>
                 <th className="py-3 px-4 text-right">Peso Actual</th>
                 <th className="py-3 px-4 text-right">Factor EV</th>
                 <th className="py-3 px-4 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#DDDCD1]">
-              {animalesFiltrados.map(a => (
-                <tr key={a.id} className="hover:bg-[#F7F7F2]/60 transition-colors">
-                  <td className="py-3 px-4 font-bold text-[#24382C]">
-                    <span className="px-2 py-0.5 bg-[#E9E5D9] rounded-md text-xs font-mono">
-                      {a.caravana_visual}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 font-mono text-[11px] text-[#74796D]">
-                    {a.caravana_rfid ? (
-                      <span className="text-[#536747] font-semibold">{a.caravana_rfid}</span>
-                    ) : (
-                      <span className="italic text-gray-400">Sin chip</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 font-medium">{a.categoria_nombre || '-'}</td>
-                  <td className="py-3 px-4">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#24382C]/10 text-[#24382C]">
-                      {a.rodeo_nombre || 'General'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-[#74796D]">{a.potrero_nombre || 'Sin asignar'}</td>
-                  <td className="py-3 px-4">{a.raza} ({a.sexo === 'Hembra' ? 'H' : 'M'})</td>
-                  <td className="py-3 px-4 text-right font-mono font-bold text-[#24382C]">
-                    {a.peso_actual_kg} kg
-                  </td>
-                  <td className="py-3 px-4 text-right font-mono font-bold text-[#83A653]">
-                    {(a.factor_ev || 1.0).toFixed(2)}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <button
-                      onClick={() => onSelectAnimal?.(a)}
-                      className="px-2.5 py-1 bg-[#83A653]/15 hover:bg-[#83A653] text-[#24382C] hover:text-white rounded-lg text-[11px] font-semibold transition-all"
-                    >
-                      Ver Ficha
-                    </button>
+              {animalesFiltrados.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="py-12 text-center text-[#74796D]">
+                    <Users className="w-10 h-10 text-[#B6A77D] mx-auto mb-2 opacity-50" />
+                    <p className="font-bold text-sm text-[#24382C]">No hay animales en el inventario</p>
+                    <p className="text-xs text-[#74796D] mt-1 max-w-sm mx-auto">
+                      Suba un archivo de bastón Tru-Test en la pestaña <b>"FN-3.4 Bastón RFID"</b> o registre un animal con el botón superior.
+                    </p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                animalesFiltrados.map(a => (
+                  <tr key={a.id} className="hover:bg-[#F7F7F2]/60 transition-colors">
+                    <td className="py-3 px-4 font-bold text-[#24382C]">
+                      <span className="px-2 py-0.5 bg-[#E9E5D9] rounded-md text-xs font-mono">
+                        {a.caravana_visual}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-[11px] text-[#74796D]">
+                      {a.caravana_rfid ? (
+                        <span className="text-[#536747] font-semibold">{a.caravana_rfid}</span>
+                      ) : (
+                        <span className="italic text-gray-400">Sin chip</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 font-medium">{a.categoria_nombre || '-'}</td>
+                    <td className="py-3 px-4">
+                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#24382C]/10 text-[#24382C]">
+                        {a.rodeo_nombre || 'General'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-[#74796D]">{a.potrero_nombre || 'Sin asignar'}</td>
+                    <td className="py-3 px-4 text-center font-mono">
+                      {a.condicion_corporal ? (
+                        <span className="px-2 py-0.5 bg-[#B6A77D]/20 text-[#343B2D] rounded-full font-bold">
+                          {a.condicion_corporal}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td className="py-3 px-4">
+                      {a.tacto ? (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          a.tacto === 'PRENADA' ? 'bg-[#38845A]/15 text-[#38845A]' :
+                          a.tacto === 'CICLICA' ? 'bg-[#52849A]/15 text-[#52849A]' :
+                          'bg-[#C65B50]/15 text-[#C65B50]'
+                        }`}>
+                          {a.tacto}
+                        </span>
+                      ) : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-[#24382C]">
+                      {a.peso_actual_kg > 0 ? `${a.peso_actual_kg} kg` : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-[#83A653]">
+                      {(a.factor_ev || 1.0).toFixed(2)}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <button
+                        onClick={() => onSelectAnimal?.(a)}
+                        className="px-2.5 py-1 bg-[#83A653]/15 hover:bg-[#83A653] text-[#24382C] hover:text-white rounded-lg text-[11px] font-semibold transition-all"
+                      >
+                        Ver Ficha
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

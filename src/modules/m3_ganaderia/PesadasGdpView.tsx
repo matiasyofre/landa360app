@@ -41,7 +41,7 @@ export const PesadasGdpView: React.FC = () => {
   const pesadasConGdp = pesadas.filter(p => p.gdp_kg_dia !== undefined && p.gdp_kg_dia !== 0);
   const gdpPromedio = pesadasConGdp.length > 0
     ? (pesadasConGdp.reduce((acc, p) => acc + (p.gdp_kg_dia || 0), 0) / pesadasConGdp.length).toFixed(3)
-    : '0.650';
+    : '0.000';
 
   return (
     <div className="space-y-6">

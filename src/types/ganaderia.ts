@@ -84,7 +84,11 @@ export interface Animal {
   sexo: SexoAnimal;
   fecha_nacimiento?: string;
   peso_actual_kg: number;
+  condicion_corporal?: number; // Escala 1-9 (ej. de Tru-Test)
+  tacto?: string; // Diagnóstico reproductivo (PRENADA, CICLICA, NO APTA, etc.)
+  advertencia?: string;
   fecha_ultima_pesada?: string;
+  hora_ultima_pesada?: string;
   gdp_historica_kg_dia: number;
   estado: EstadoAnimal;
   origen: OrigenAnimal;
@@ -117,12 +121,27 @@ export interface PesadaAnimal {
   caravana_visual?: string;
   caravana_rfid?: string;
   fecha: string;
+  hora?: string;
   peso_kg: number;
   peso_anterior_kg?: number;
   dias_transcurridos?: number;
   gdp_kg_dia?: number;
+  condicion_corporal?: number;
+  tacto?: string;
   origen_pesada: string;
   observaciones?: string;
+}
+
+export interface LecturaRFID {
+  eid: string;
+  vid: string;
+  fecha: string;
+  hora?: string;
+  peso?: number;
+  condicion?: number;
+  tacto?: string;
+  advertencia?: string;
+  nota?: string;
 }
 
 export interface EventoSanitario {

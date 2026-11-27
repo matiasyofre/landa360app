@@ -15,9 +15,29 @@ interface Props {
 
 export const FichaAnimalView: React.FC<Props> = ({ animalInicial, onVolver }) => {
   const [animales] = useState<Animal[]>(ganaderiaService.getAnimales());
-  const [animalActivo, setAnimalActivo] = useState<Animal>(animalInicial || animales[0]);
+  const [animalActivo, setAnimalActivo] = useState<Animal | null>(animalInicial || (animales.length > 0 ? animales[0] : null));
   const [pesadas] = useState<PesadaAnimal[]>(ganaderiaService.getPesadas());
   const [eventosSanitarios] = useState<EventoSanitario[]>(ganaderiaService.getEventosSanitarios());
+
+  if (!animalActivo || animales.length === 0) {
+    return (
+      <div className="bg-[#FFFFFF] rounded-2xl border border-dashed border-[#DDDCD1] p-12 text-center text-[#74796D] shadow-sm">
+        <Award className="w-12 h-12 text-[#B6A77D] mx-auto mb-3 opacity-50" />
+        <h4 className="font-bold text-base text-[#24382C] mb-1">No hay animales en el inventario</h4>
+        <p className="text-xs max-w-sm mx-auto mb-4">
+          Para visualizar fichas individuales con trazabilidad, cargue primero un archivo de bastón Tru-Test en la pestaña RFID o registre un animal en el inventario.
+        </p>
+        {onVolver && (
+          <button
+            onClick={onVolver}
+            className="px-4 py-2 bg-[#83A653] hover:bg-[#536747] text-white text-xs font-bold rounded-xl transition-all"
+          >
+            Ir al Inventario
+          </button>
+        )}
+      </div>
+    );
+  }
 
   // Filtrar eventos de este animal
   const historialPesadas = pesadas.filter(p => p.animal_id === animalActivo.id);
@@ -87,6 +107,20 @@ export const FichaAnimalView: React.FC<Props> = ({ animalInicial, onVolver }) =>
               <p className="text-xs text-[#74796D] font-mono">
                 Transponder RFID ISO: <span className="text-[#536747] font-bold">{animalActivo.caravana_rfid || 'Sin Chip'}</span>
               </p>
+              {(animalActivo.condicion_corporal || animalActivo.tacto) && (
+                <div className="flex items-center gap-2 mt-1 text-xs">
+                  {animalActivo.condicion_corporal && (
+                    <span className="px-2 py-0.5 bg-[#B6A77D]/20 text-[#343B2D] rounded-full font-bold">
+                      Condición Corporal: {animalActivo.condicion_corporal}/9
+                    </span>
+                  )}
+                  {animalActivo.tacto && (
+                    <span className="px-2 py-0.5 bg-[#38845A]/15 text-[#38845A] rounded-full font-bold">
+                      Tacto: {animalActivo.tacto}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
