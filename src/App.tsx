@@ -6,6 +6,7 @@ import { ColaboradoresManager } from './modules/m1_nucleo/ColaboradoresManager';
 import { RolesManager } from './modules/m1_nucleo/RolesManager';
 import { AuditLogViewer } from './modules/m1_nucleo/AuditLogViewer';
 import { ExportBackupButton } from './modules/m1_nucleo/ExportBackupButton';
+import { CultivosParamManager } from './modules/m2_agricola/CultivosParamManager';
 import { LockScreen } from './modules/m1_nucleo/LockScreen';
 import { useInactivityLock } from './hooks/useInactivityLock';
 import { 
@@ -19,13 +20,14 @@ import {
   RefreshCw,
   LogOut,
   User,
-  Sparkles
+  Sparkles,
+  Sprout
 } from 'lucide-react';
 
 function DashboardView() {
   const { user, setUser, tenant, rolActivo, cambiarRolActivo, roles, logout } = useAuth();
   const [showWizard, setShowWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'colaboradores' | 'roles' | 'auditoria' | 'respaldo'>('colaboradores');
+  const [activeTab, setActiveTab] = useState<'colaboradores' | 'roles' | 'auditoria' | 'respaldo' | 'parametros_agricolas'>('colaboradores');
   
   // Blindaje Zero-Trust: Auto-Logout por inactividad a los 15 minutos
   const { isLocked, unlock } = useInactivityLock(15, Boolean(user && tenant));
@@ -214,6 +216,18 @@ function DashboardView() {
           </button>
 
           <button
+            onClick={() => setActiveTab('parametros_agricolas')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'parametros_agricolas'
+                ? 'bg-campo-verde text-white shadow-sm'
+                : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
+            }`}
+          >
+            <Sprout className="w-4 h-4" />
+            <span>Cultivos & Campañas (M2)</span>
+          </button>
+
+          <button
             onClick={() => setShowWizard(true)}
             className="px-3 py-2 rounded-xl text-xs font-semibold text-campo-oliva hover:text-campo-bosque bg-campo-card border border-campo-borde hover:bg-campo-arena transition-colors ml-auto flex items-center gap-1.5 whitespace-nowrap"
           >
@@ -222,11 +236,12 @@ function DashboardView() {
           </button>
         </div>
 
-        {/* Vistas Reales y Operativas del Módulo 1 */}
+        {/* Vistas Reales y Operativas del Módulo 1 y Módulo 2 */}
         {activeTab === 'colaboradores' && <ColaboradoresManager />}
         {activeTab === 'roles' && <RolesManager />}
         {activeTab === 'auditoria' && <AuditLogViewer />}
         {activeTab === 'respaldo' && <ExportBackupButton />}
+        {activeTab === 'parametros_agricolas' && <CultivosParamManager />}
 
       </main>
 
