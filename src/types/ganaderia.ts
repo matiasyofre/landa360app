@@ -30,6 +30,8 @@ export interface Rodeo {
   nombre: string;
   finalidad: FinalidadRodeo;
   color_identificador: string;
+  potrero_id?: string;
+  potrero_nombre?: string;
   observaciones?: string;
   activo: boolean;
 }

@@ -6,7 +6,8 @@
 import React, { useState } from 'react';
 import { ganaderiaService } from '../../services/ganaderiaService';
 import { PotreroGanadero, Rodeo, MovimientoHacienda } from '../../types/ganaderia';
-import { Compass, ArrowRightLeft, Plus, Clock, Trees, Edit2, Trash2 } from 'lucide-react';
+import { Compass, ArrowRightLeft, Plus, Clock, Trees, Edit2, Trash2, LayoutGrid, List } from 'lucide-react';
+import { MapaInteractivoPotreros } from './MapaInteractivoPotreros';
 
 interface Props {
   onDataChanged?: () => void;
@@ -14,8 +15,16 @@ interface Props {
 
 export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
   const [potreros, setPotreros] = useState<PotreroGanadero[]>(ganaderiaService.getPotreros());
-  const [rodeos] = useState<Rodeo[]>(ganaderiaService.getRodeos());
+  const [rodeos, setRodeos] = useState<Rodeo[]>(ganaderiaService.getRodeos());
   const [movimientos, setMovimientos] = useState<MovimientoHacienda[]>(ganaderiaService.getMovimientos());
+  const [vistaActiva, setVistaActiva] = useState<'mapa' | 'detalle'>('mapa');
+
+  const refrescarTodo = () => {
+    setPotreros(ganaderiaService.getPotreros());
+    setRodeos(ganaderiaService.getRodeos());
+    setMovimientos(ganaderiaService.getMovimientos());
+    onDataChanged?.();
+  };
 
   const handleEliminarMovimiento = (id: string) => {
     if (window.confirm('¿Está seguro de eliminar este registro de movimiento?')) {
@@ -143,7 +152,33 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Selector de Vistas: Mapa Táctico Animado vs Tarjetas Catastro */}
+          <div className="flex bg-[#E9E5D9] p-1 rounded-xl text-xs font-semibold">
+            <button
+              onClick={() => setVistaActiva('mapa')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                vistaActiva === 'mapa'
+                  ? 'bg-[#24382C] text-white shadow-sm'
+                  : 'text-[#343B2D] hover:text-[#24382C]'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Mapa Táctico Animado
+            </button>
+            <button
+              onClick={() => setVistaActiva('detalle')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                vistaActiva === 'detalle'
+                  ? 'bg-[#24382C] text-white shadow-sm'
+                  : 'text-[#343B2D] hover:text-[#24382C]'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              Catastro de Potreros
+            </button>
+          </div>
+
           <button
             onClick={handleAbrirNuevo}
             className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 border border-[#DDDCD1] hover:bg-[#F7F7F2] text-[#24382C] text-xs font-semibold rounded-xl transition-all"
@@ -156,13 +191,21 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
             className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-4 py-2 bg-[#83A653] hover:bg-[#536747] text-white text-xs font-bold rounded-xl transition-all shadow-sm"
           >
             <ArrowRightLeft className="w-4 h-4" />
-            Mover Rodeo (2 toques)
+            Mover Manual
           </button>
         </div>
       </div>
 
-      {/* GRID DE POTREROS CON SEMÁFORO DE CARGA O ESTADO VACÍO */}
-      {potreros.length === 0 ? (
+      {/* RENDERIZADO SEGÚN VISTA: MAPA TÁCTICO INTERACTIVO O CATASTRO */}
+      {vistaActiva === 'mapa' ? (
+        <MapaInteractivoPotreros
+          potreros={potreros}
+          rodeos={rodeos}
+          animales={ganaderiaService.getAnimales()}
+          onDataChanged={refrescarTodo}
+          onAbrirNuevoPotrero={handleAbrirNuevo}
+        />
+      ) : potreros.length === 0 ? (
         <div className="bg-[#FFFFFF] rounded-2xl border border-dashed border-[#DDDCD1] p-12 text-center text-[#74796D] shadow-sm">
           <Compass className="w-12 h-12 text-[#B6A77D] mx-auto mb-3 opacity-50" />
           <h4 className="font-bold text-base text-[#24382C] mb-1">No hay potreros registrados</h4>

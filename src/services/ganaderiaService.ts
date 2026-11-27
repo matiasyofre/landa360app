@@ -127,8 +127,8 @@ export const ganaderiaService = {
 
   getPotreros(): PotreroGanadero[] {
     const data = localStorage.getItem(STORAGE_KEY_POTREROS);
-    // Purgar potreros de prueba iniciales (La Legua, El Bajo, Loma Norte, Las Acacias)
-    if (data && (data.includes('La Legua') || data.includes('El Bajo') || data.includes('Loma Norte') || data.includes('Las Acacias'))) {
+    // Purgar potreros de prueba iniciales de versiones antiguas
+    if (data && (data.includes('Potrero 1 - La Legua') || data.includes('Potrero 2 - El Bajo') || data.includes('Loma Norte') || data.includes('Las Acacias'))) {
       localStorage.removeItem(STORAGE_KEY_POTREROS);
       return [];
     }
@@ -315,6 +315,15 @@ export const ganaderiaService = {
     list.unshift(nuevo);
     localStorage.setItem(STORAGE_KEY_MOVIMIENTOS, JSON.stringify(list));
 
+    // Actualizar potrero en el rodeo
+    const rodeosActuales = this.getRodeos();
+    const rodeoIdx = rodeosActuales.findIndex(r => r.id === mov.rodeo_id);
+    if (rodeoIdx >= 0) {
+      rodeosActuales[rodeoIdx].potrero_id = mov.potrero_destino_id;
+      rodeosActuales[rodeoIdx].potrero_nombre = dest ? dest.nombre : undefined;
+      localStorage.setItem(STORAGE_KEY_RODEOS, JSON.stringify(rodeosActuales));
+    }
+
     // Actualizar potrero de los animales del rodeo
     const animales = this.getAnimales();
     const actualizados = animales.map(a => {
@@ -330,6 +339,28 @@ export const ganaderiaService = {
     localStorage.setItem(STORAGE_KEY_ANIMALES, JSON.stringify(actualizados));
 
     return nuevo;
+  },
+
+  // Generar potreros y rodeos de demostración interactiva (idénticos a Campo Claro pero mejorados)
+  cargarDemostracionInteractiva(): { potreros: PotreroGanadero[]; rodeos: Rodeo[] } {
+    const demoPotreros: PotreroGanadero[] = [
+      { id: 'demo-pot-1', tenant_id: 'default', nombre: 'La Laguna', superficie_ha: 110, recurso_forrajero: 'Pastura Cultivada Alfalfa', receptividad_objetivo_ev_ha: 1.0, dias_descanso_actual: 18, activo: true },
+      { id: 'demo-pot-2', tenant_id: 'default', nombre: 'El Bajo', superficie_ha: 88, recurso_forrajero: 'Bajo Dulce / Festuca', receptividad_objetivo_ev_ha: 0.9, dias_descanso_actual: 24, activo: true },
+      { id: 'demo-pot-3', tenant_id: 'default', nombre: 'El Monte', superficie_ha: 110, recurso_forrajero: 'Campo Natural Mejorado', receptividad_objetivo_ev_ha: 0.8, dias_descanso_actual: 32, activo: true },
+      { id: 'demo-pot-4', tenant_id: 'default', nombre: 'La Loma', superficie_ha: 88, recurso_forrajero: 'Pastura Consociada', receptividad_objetivo_ev_ha: 1.1, dias_descanso_actual: 12, activo: true },
+    ];
+
+    const demoRodeos: Rodeo[] = [
+      { id: 'demo-rod-1', tenant_id: 'default', nombre: 'Vacas de cría', finalidad: 'Cría', color_identificador: '#83A653', potrero_id: 'demo-pot-1', potrero_nombre: 'La Laguna', observaciones: '30 cabezas - Rodeo General de Cría', activo: true },
+      { id: 'demo-rod-2', tenant_id: 'default', nombre: 'Novillos', finalidad: 'Invernada / Engorde', color_identificador: '#536747', potrero_id: 'demo-pot-2', potrero_nombre: 'El Bajo', observaciones: '64 cab. - 381 kg prom.', activo: true },
+      { id: 'demo-rod-3', tenant_id: 'default', nombre: 'Vaquillonas', finalidad: 'Recría', color_identificador: '#B6A77D', potrero_id: 'demo-pot-3', potrero_nombre: 'El Monte', observaciones: '41 cab. - 122 kg prom.', activo: true },
+      { id: 'demo-rod-4', tenant_id: 'default', nombre: 'Terneros', finalidad: 'Recría', color_identificador: '#D9A441', potrero_id: 'demo-pot-4', potrero_nombre: 'La Loma', observaciones: '26 cab. - 208 kg prom.', activo: true },
+    ];
+
+    localStorage.setItem(STORAGE_KEY_POTREROS, JSON.stringify(demoPotreros));
+    localStorage.setItem(STORAGE_KEY_RODEOS, JSON.stringify(demoRodeos));
+
+    return { potreros: demoPotreros, rodeos: demoRodeos };
   },
 
   // --- PESADAS & GANANCIA DIARIA DE PESO (GDP) (FN-3.6) ---
