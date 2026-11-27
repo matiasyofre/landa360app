@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <defs>
+    <linearGradient id="c360_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E6C4A" />
+      <stop offset="100%" stop-color="#012D1D" />
+    </linearGradient>
+    <linearGradient id="c360_glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  <!-- Background Badge -->
+  <rect width="40" height="40" rx="10" fill="url(#c360_grad)" />
+  <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="9.25" fill="none" stroke="#34D399" stroke-width="1.2" stroke-opacity="0.35" />
+  
+  <!-- 360 Degree Orbital Arc -->
+  <ellipse cx="20" cy="20" rx="16" ry="9" fill="none" stroke="url(#c360_glow)" stroke-width="1.6" stroke-dasharray="60 20" stroke-linecap="round" transform="rotate(-25 20 20)" opacity="0.9" />
+  <circle cx="32.5" cy="12.5" r="1.8" fill="#34D399" />
+
+  <!-- Modern Precision Tractor Silhouette -->
+  <g fill="#FFFFFF">
+    <!-- Big Rear Wheel -->
+    <circle cx="13" cy="25.5" r="5.5" fill="none" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="13" cy="25.5" r="2.2" fill="#34D399" />
+    <!-- Front Wheel -->
+    <circle cx="28" cy="27" r="3.5" fill="none" stroke="#FFFFFF" stroke-width="1.8" />
+    <circle cx="28" cy="27" r="1.4" fill="#34D399" />
+    <!-- Cab -->
+    <path d="M10 20 C10 16.5 12.5 14 16 14 L19.5 14 L19.5 21 L11.5 21 Z" />
+    <path d="M12.5 15.5 L18 15.5 L18 19.5 L12 19.5 C12 17.5 12.2 16.5 12.5 15.5 Z" fill="#012D1D" />
+    <!-- Engine Hood -->
+    <path d="M19.5 17.5 L28 17.5 C29.5 17.5 30.5 18.5 30.5 20.5 L30.5 24 L20 24 Z" />
+    <rect x="21" y="18.8" width="6.5" height="2" rx="0.5" fill="#0E6C4A" />
+    <!-- Exhaust Pipe -->
+    <rect x="26.5" y="13" width="1.4" height="4.5" rx="0.6" fill="#34D399" />
+    <!-- Cab Visor Cap -->
+    <path d="M9.5 14 L20.5 14 C21 14 21 13 20.5 13 L10.5 13 C9.8 13 9.4 13.5 9.5 14 Z" fill="#34D399" />
+  </g>
+</svg>

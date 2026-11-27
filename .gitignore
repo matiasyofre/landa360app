@@ -1,0 +1,27 @@
+# Logs y dependencias
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+
+# Variables de entorno secretas
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor y SO
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Documentación interna pesada (para no inflar el repo)
+Relevamiento_y_propuesta/
