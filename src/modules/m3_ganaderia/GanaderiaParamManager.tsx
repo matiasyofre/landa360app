@@ -327,41 +327,51 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {rodeos.map(rod => (
-              <div key={rod.id} className="p-3.5 rounded-xl border border-[#DDDCD1] bg-[#F7F7F2] flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: rod.color_identificador || '#83A653' }}
-                    />
-                    <span className="text-[10px] font-bold text-[#74796D] uppercase px-2 py-0.5 bg-[#E9E5D9] rounded-md">
-                      {rod.finalidad}
-                    </span>
+          {rodeos.length === 0 ? (
+            <div className="p-8 text-center border border-dashed border-[#DDDCD1] rounded-2xl bg-[#F7F7F2]/50">
+              <ShieldCheck className="w-10 h-10 text-[#B6A77D] mx-auto mb-2 opacity-50" />
+              <p className="font-bold text-sm text-[#24382C]">No hay rodeos registrados</p>
+              <p className="text-xs text-[#74796D] mt-1 max-w-sm mx-auto">
+                Cree los rodeos o tropas operativas de su establecimiento (cría, invernada, recría, etc.) con el botón superior.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {rodeos.map(rod => (
+                <div key={rod.id} className="p-3.5 rounded-xl border border-[#DDDCD1] bg-[#F7F7F2] flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: rod.color_identificador || '#83A653' }}
+                      />
+                      <span className="text-[10px] font-bold text-[#74796D] uppercase px-2 py-0.5 bg-[#E9E5D9] rounded-md">
+                        {rod.finalidad}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-sm text-[#24382C]">{rod.nombre}</h4>
+                    {rod.observaciones && <p className="text-xs text-[#74796D] mt-1">{rod.observaciones}</p>}
                   </div>
-                  <h4 className="font-bold text-sm text-[#24382C]">{rod.nombre}</h4>
-                  {rod.observaciones && <p className="text-xs text-[#74796D] mt-1">{rod.observaciones}</p>}
+                  <div className="flex justify-end gap-1 pt-2 border-t border-[#DDDCD1]/60 mt-3">
+                    <button
+                      onClick={() => { setEditRodeo(rod); setModalRodeo(true); }}
+                      className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors rounded hover:bg-[#E9E5D9]"
+                      title="Editar Rodeo"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRodeo(rod.id, rod.nombre)}
+                      className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors rounded hover:bg-[#C65B50]/15"
+                      title="Eliminar Rodeo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-1 pt-2 border-t border-[#DDDCD1]/60 mt-3">
-                  <button
-                    onClick={() => { setEditRodeo(rod); setModalRodeo(true); }}
-                    className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors rounded hover:bg-[#E9E5D9]"
-                    title="Editar Rodeo"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteRodeo(rod.id, rod.nombre)}
-                    className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors rounded hover:bg-[#C65B50]/15"
-                    title="Eliminar Rodeo"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

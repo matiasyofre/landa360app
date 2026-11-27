@@ -105,6 +105,13 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
     ? (animales.filter(a => a.estado === 'Activo').reduce((acc, a) => acc + a.peso_actual_kg, 0) / totalCabezas).toFixed(1)
     : 0;
 
+  // Rodeos activos con hacienda activa presente
+  const rodeosActivosConHacienda = new Set(
+    animales
+      .filter(a => a.estado === 'Activo' && a.rodeo_id)
+      .map(a => a.rodeo_id)
+  ).size;
+
   return (
     <div className="space-y-6">
       {/* TARJETAS KPI DE STOCK GANADERO */}
@@ -145,7 +152,7 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
           </div>
           <div>
             <p className="text-xs font-semibold text-[#74796D] uppercase">Rodeos Activos</p>
-            <p className="text-2xl font-bold text-[#24382C]">{rodeos.length} <span className="text-sm font-normal text-[#74796D]">tropas</span></p>
+            <p className="text-2xl font-bold text-[#24382C]">{rodeosActivosConHacienda} <span className="text-sm font-normal text-[#74796D]">tropas</span></p>
           </div>
         </div>
       </div>

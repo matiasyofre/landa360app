@@ -40,11 +40,7 @@ const DEFAULT_CATEGORIAS: CategoriaGanadera[] = [
   { id: 'cat-6', tenant_id: 'default', nombre: 'Toro', sexo: 'Macho', factor_ev: 1.50, peso_referencia_kg: 750, activo: true },
 ];
 
-const DEFAULT_RODEOS: Rodeo[] = [
-  { id: 'rod-1', tenant_id: 'default', nombre: 'Rodeo General', finalidad: 'Cría', color_identificador: '#83A653', activo: true },
-  { id: 'rod-2', tenant_id: 'default', nombre: 'Invernada', finalidad: 'Invernada / Engorde', color_identificador: '#536747', activo: true },
-  { id: 'rod-3', tenant_id: 'default', nombre: 'Vaquillonas Reposición', finalidad: 'Recría', color_identificador: '#B6A77D', activo: true },
-];
+
 
 
 const DEFAULT_RAZAS: RazaGanadera[] = [
@@ -70,6 +66,7 @@ export const ganaderiaService = {
     localStorage.removeItem(STORAGE_KEY_COSTOS);
     localStorage.removeItem(STORAGE_KEY_SANIDAD);
     localStorage.removeItem(STORAGE_KEY_POTREROS);
+    localStorage.removeItem(STORAGE_KEY_RODEOS);
   },
 
   // --- MAESTROS PARAMÉTRICOS ---
@@ -102,11 +99,12 @@ export const ganaderiaService = {
 
   getRodeos(): Rodeo[] {
     const data = localStorage.getItem(STORAGE_KEY_RODEOS);
-    if (data === null) {
-      localStorage.setItem(STORAGE_KEY_RODEOS, JSON.stringify(DEFAULT_RODEOS));
-      return DEFAULT_RODEOS;
+    // Purgar rodeos dummy de prueba guardados en versiones previas
+    if (data && (data.includes('Rodeo General') || data.includes('Rodeo Cría General') || data.includes('Invernada') || data.includes('rod-1') || data.includes('rod-4'))) {
+      localStorage.removeItem(STORAGE_KEY_RODEOS);
+      return [];
     }
-    return JSON.parse(data);
+    return data ? JSON.parse(data) : [];
   },
 
   saveRodeo(rodeo: Rodeo): Rodeo[] {
