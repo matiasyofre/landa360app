@@ -3,8 +3,14 @@ import { supabase } from '../config/supabase';
 import { Rol, CATALOGO_FUNCIONES } from '../types/rbac';
 import { TenantRecord, rbacService } from '../services/tenantRbacService';
 
+export interface UserSession {
+  id: string;
+  email: string;
+  nombreCompleto: string;
+}
+
 interface AuthContextType {
-  user: { id: string; email: string; nombreCompleto: string } | null;
+  user: UserSession | null;
   tenant: TenantRecord | null;
   roles: Rol[];
   rolActivo: Rol | null;
@@ -12,6 +18,7 @@ interface AuthContextType {
   esAdmin: boolean;
   puedeVerPrecios: boolean;
   isLoading: boolean;
+  setUser: (user: UserSession | null) => void;
   setTenant: (tenant: TenantRecord) => void;
   cambiarRolActivo: (rolId: string) => void;
   recargarRoles: () => Promise<void>;
@@ -84,20 +91,18 @@ const ROLES_PREDETERMINADOS = (tenantId: string): Rol[] => [
 ];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<{ id: string; email: string; nombreCompleto: string } | null>({
-    id: 'usr_demo_admin',
-    email: 'administrador@campo360.com',
-    nombreCompleto: 'Propietario Establecimiento'
+  const [user, setUser] = useState<UserSession | null>(() => {
+    const saved = localStorage.getItem('campo360_active_user');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return null; }
+    }
+    return null;
   });
 
   const [tenant, setTenantState] = useState<TenantRecord | null>(() => {
     const saved = localStorage.getItem('campo360_active_tenant');
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
+      try { return JSON.parse(saved); } catch { return null; }
     }
     return null;
   });
@@ -105,6 +110,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<Rol[]>([]);
   const [rolActivoId, setRolActivoId] = useState<string>('rol_dueno');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Escuchar sesión en vivo de Supabase Auth
+  useEffect(() => {
+    async function initAuth() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const authUser: UserSession = {
+            id: session.user.id,
+            email: session.user.email || '',
+            nombreCompleto: session.user.user_metadata?.nombre_completo || session.user.email?.split('@')[0] || 'Usuario'
+          };
+          setUser(authUser);
+          localStorage.setItem('campo360_active_user', JSON.stringify(authUser));
+        }
+      } catch (err) {
+        console.warn('Error al verificar sesión de Supabase:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const authUser: UserSession = {
+          id: session.user.id,
+          email: session.user.email || '',
+          nombreCompleto: session.user.user_metadata?.nombre_completo || session.user.email?.split('@')[0] || 'Usuario'
+        };
+        setUser(authUser);
+        localStorage.setItem('campo360_active_user', JSON.stringify(authUser));
+      } else if (!localStorage.getItem('campo360_active_user')) {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Persistir usuario activo
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('campo360_active_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('campo360_active_user');
+    }
+  }, [user]);
 
   // Inicializar o sincronizar roles del tenant
   const recargarRoles = async () => {
@@ -114,7 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (dbRoles.length > 0) {
         setRoles(dbRoles);
       } else {
-        // Si aún no existen en DB, usamos los defaults
         setRoles(ROLES_PREDETERMINADOS(tenant.id));
       }
     } catch {
@@ -125,9 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (tenant) {
       localStorage.setItem('campo360_active_tenant', JSON.stringify(tenant));
-      recargarRoles().finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
+      recargarRoles();
     }
   }, [tenant]);
 
@@ -137,10 +190,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const rolActivo = roles.find((r) => r.id === rolActivoId) || roles[0] || null;
   const funcionesActivas = rolActivo ? rolActivo.funcionesIds : [];
-  const esAdmin = rolActivo?.id === 'rol_dueno' || user?.email === 'administrador@campo360.com';
+  const esAdmin = Boolean(rolActivo?.id === 'rol_dueno' || user?.email?.includes('dueno') || user?.email?.includes('admin'));
   
   // FN-1.3: Matriz de Privacidad Estricta
-  const puedeVerPrecios = esAdmin || funcionesActivas.includes('fn_1_3_privacidad_precios');
+  const puedeVerPrecios = Boolean(esAdmin || funcionesActivas.includes('fn_1_3_privacidad_precios'));
 
   const cambiarRolActivo = (rolId: string) => {
     setRolActivoId(rolId);
@@ -149,7 +202,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const crearNuevoRol = async (nombre: string, descripcion: string, funcionesIds: string[]): Promise<Rol | null> => {
     if (!tenant) return null;
     
-    // 1. Guardar en Supabase
     const dbRol = await rbacService.crearRol(tenant.id, nombre, descripcion, funcionesIds);
     
     const nuevoRol: Rol = dbRol || {
@@ -169,12 +221,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const actualizarFuncionesRol = async (rolId: string, funcionesIds: string[]): Promise<boolean> => {
     if (!tenant) return false;
 
-    // Actualizar localmente de inmediato para UX fluida
     setRoles((prev) =>
       prev.map((r) => (r.id === rolId ? { ...r, funcionesIds } : r))
     );
 
-    // Persistir en Supabase
     return await rbacService.actualizarFuncionesDeRol(tenant.id, rolId, funcionesIds);
   };
 
@@ -182,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setTenantState(null);
+    localStorage.removeItem('campo360_active_user');
     localStorage.removeItem('campo360_active_tenant');
   };
 
@@ -196,6 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         esAdmin,
         puedeVerPrecios,
         isLoading,
+        setUser,
         setTenant,
         cambiarRolActivo,
         recargarRoles,

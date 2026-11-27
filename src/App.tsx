@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthScreen } from './modules/m1_nucleo/AuthScreen';
 import { OnboardingWizard } from './modules/m1_nucleo/OnboardingWizard';
 import { RolesManager } from './modules/m1_nucleo/RolesManager';
 import { PrivacyDemoCard } from './modules/m1_nucleo/PrivacyDemoCard';
@@ -11,15 +12,28 @@ import {
   Eye, 
   RefreshCw,
   HelpCircle,
-  Sparkles
+  Sparkles,
+  LogOut,
+  User
 } from 'lucide-react';
 
 function DashboardView() {
-  const { tenant, rolActivo, cambiarRolActivo, roles } = useAuth();
+  const { user, setUser, tenant, rolActivo, cambiarRolActivo, roles, logout } = useAuth();
   const [showWizard, setShowWizard] = useState(false);
   const [activeTab, setActiveTab] = useState<'roles' | 'privacidad' | 'onboarding'>('roles');
 
-  // Si no hay tenant o eligió abrir el wizard
+  // 1. BLOQUEO ZERO-TRUST: Si no está autenticado, muestra Pantalla de Login / Registro
+  if (!user) {
+    return (
+      <AuthScreen 
+        onAuthSuccess={(authenticatedUser) => {
+          setUser(authenticatedUser);
+        }} 
+      />
+    );
+  }
+
+  // 2. ONBOARDING: Si el usuario está autenticado pero aún no configuró su campo (o pidió reconfigurar)
   if (!tenant || showWizard) {
     return (
       <div className="min-h-screen bg-slate-950 p-4 sm:p-8 flex flex-col justify-center">
@@ -28,6 +42,7 @@ function DashboardView() {
     );
   }
 
+  // 3. DASHBOARD AUTENTICADO
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Top Navbar */}
@@ -52,8 +67,9 @@ function DashboardView() {
           </div>
         </div>
 
-        {/* Simulador Rápido de Rol en Header */}
+        {/* Simulador de Rol, Usuario y Acciones */}
         <div className="flex items-center gap-3">
+          {/* Selector de Rol Activo */}
           <div className="hidden sm:flex items-center gap-2 bg-slate-950 px-3 py-1 rounded-lg border border-slate-800 text-xs">
             <span className="text-slate-400">Rol Activo:</span>
             <select
@@ -69,6 +85,12 @@ function DashboardView() {
             </select>
           </div>
 
+          {/* Badge Usuario Logueado */}
+          <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-300 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
+            <User className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="truncate max-w-[130px]">{user.nombreCompleto}</span>
+          </div>
+
           <div className="flex items-center gap-1.5 text-xs font-mono px-2.5 py-1 rounded-lg bg-emerald-950/40 text-emerald-300 border border-emerald-900/60">
             <Wifi className="w-3.5 h-3.5" />
             <span className="hidden md:inline">PWA Offline</span>
@@ -80,6 +102,15 @@ function DashboardView() {
             className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
+          </button>
+
+          {/* Botón Cerrar Sesión */}
+          <button
+            onClick={logout}
+            title="Cerrar Sesión Segura"
+            className="p-1.5 rounded-lg bg-red-950/40 text-red-400 hover:text-red-300 hover:bg-red-900/60 border border-red-900/50 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </header>
