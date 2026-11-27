@@ -3,7 +3,7 @@
 // Control de stock de cabezas vivas, altas, bajas, mortandad y clasificación
 // ==============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ganaderiaService } from '../../services/ganaderiaService';
 import { Animal, CategoriaGanadera, Rodeo } from '../../types/ganaderia';
 import { Users, Filter, Plus, ShieldAlert, Award, Trash2 } from 'lucide-react';
@@ -15,8 +15,14 @@ interface Props {
 
 export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefresh }) => {
   const [animales, setAnimales] = useState<Animal[]>(ganaderiaService.getAnimales());
-  const [categorias] = useState<CategoriaGanadera[]>(ganaderiaService.getCategorias());
-  const [rodeos] = useState<Rodeo[]>(ganaderiaService.getRodeos());
+  const [categorias, setCategorias] = useState<CategoriaGanadera[]>(ganaderiaService.getCategorias());
+  const [rodeos, setRodeos] = useState<Rodeo[]>(ganaderiaService.getRodeos());
+
+  useEffect(() => {
+    setAnimales(ganaderiaService.getAnimales());
+    setCategorias(ganaderiaService.getCategorias());
+    setRodeos(ganaderiaService.getRodeos());
+  }, []);
 
   const [filtroRodeo, setFiltroRodeo] = useState<string>('todos');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todos');

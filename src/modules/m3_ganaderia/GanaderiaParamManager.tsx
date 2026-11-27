@@ -74,6 +74,14 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
     onDataChanged?.();
   };
 
+  const handleDeleteCat = (id: string, nombre: string) => {
+    if (window.confirm(`¿Está seguro de eliminar la categoría "${nombre}"?`)) {
+      const updated = ganaderiaService.deleteCategoria(id);
+      setCategorias(updated);
+      onDataChanged?.();
+    }
+  };
+
   // Handlers Rodeos
   const handleSaveRodeo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +99,14 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
     setRodeos(updated);
     setModalRodeo(false);
     onDataChanged?.();
+  };
+
+  const handleDeleteRodeo = (id: string, nombre: string) => {
+    if (window.confirm(`¿Está seguro de eliminar el rodeo "${nombre}"?`)) {
+      const updated = ganaderiaService.deleteRodeo(id);
+      setRodeos(updated);
+      onDataChanged?.();
+    }
   };
 
   // Handlers Potreros
@@ -141,6 +157,23 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
     onDataChanged?.();
   };
 
+  const handleDeleteFarmaco = (id: string, nombre: string) => {
+    if (window.confirm(`¿Está seguro de eliminar el fármaco "${nombre}"?`)) {
+      const updated = ganaderiaService.deleteFarmaco(id);
+      setFarmacos(updated);
+      onDataChanged?.();
+    }
+  };
+
+  const handleLimpiarDatosResiduales = () => {
+    if (window.confirm('¿Desea purgar registros huérfanos o de prueba anteriores? (Se vaciarán movimientos antiguos, pesadas de prueba y animales residuales manteniendo sus catálogos).')) {
+      ganaderiaService.limpiarDatosDePrueba();
+      setPotreros(ganaderiaService.getPotreros());
+      onDataChanged?.();
+      alert('Datos residuales purgados correctamente.');
+    }
+  };
+
   return (
     <div className="bg-[#FFFFFF] rounded-2xl p-6 border border-[#DDDCD1] shadow-sm mb-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-[#DDDCD1] gap-4">
@@ -154,44 +187,55 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
           </p>
         </div>
 
-        {/* Selector de Tabs */}
-        <div className="flex bg-[#E9E5D9] p-1 rounded-xl text-xs font-semibold">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setTab('categorias')}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              tab === 'categorias' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
-            }`}
+            onClick={handleLimpiarDatosResiduales}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C65B50]/30 text-[#C65B50] hover:bg-[#C65B50]/10 text-xs font-semibold transition-all"
+            title="Purgar registros residuales de prueba"
           >
-            <Layers className="w-3.5 h-3.5" />
-            Categorías & EV ({categorias.length})
+            <Trash2 className="w-3.5 h-3.5" />
+            Limpiar Datos Residuales
           </button>
-          <button
-            onClick={() => setTab('rodeos')}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              tab === 'rodeos' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Rodeos / Tropas ({rodeos.length})
-          </button>
-          <button
-            onClick={() => setTab('potreros')}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              tab === 'potreros' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5" />
-            Potreros ({potreros.length})
-          </button>
-          <button
-            onClick={() => setTab('farmacos')}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-              tab === 'farmacos' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
-            }`}
-          >
-            <HeartPulse className="w-3.5 h-3.5" />
-            Vademécum & Carencia ({farmacos.length})
-          </button>
+
+          {/* Selector de Tabs */}
+          <div className="flex bg-[#E9E5D9] p-1 rounded-xl text-xs font-semibold">
+            <button
+              onClick={() => setTab('categorias')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                tab === 'categorias' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              Categorías & EV ({categorias.length})
+            </button>
+            <button
+              onClick={() => setTab('rodeos')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                tab === 'rodeos' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Rodeos / Tropas ({rodeos.length})
+            </button>
+            <button
+              onClick={() => setTab('potreros')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                tab === 'potreros' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              Potreros ({potreros.length})
+            </button>
+            <button
+              onClick={() => setTab('farmacos')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                tab === 'farmacos' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
+              }`}
+            >
+              <HeartPulse className="w-3.5 h-3.5" />
+              Vademécum & Carencia ({farmacos.length})
+            </button>
+          </div>
         </div>
       </div>
 
@@ -243,10 +287,17 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
                     <td className="py-2.5 px-3 text-right">
                       <button
                         onClick={() => { setEditCat(cat); setModalCat(true); }}
-                        className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors"
-                        title="Editar"
+                        className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors mr-1"
+                        title="Editar Categoría"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCat(cat.id, cat.nombre)}
+                        className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors"
+                        title="Eliminar Categoría"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -292,12 +343,20 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
                   <h4 className="font-bold text-sm text-[#24382C]">{rod.nombre}</h4>
                   {rod.observaciones && <p className="text-xs text-[#74796D] mt-1">{rod.observaciones}</p>}
                 </div>
-                <div className="flex justify-end pt-2 border-t border-[#DDDCD1]/60 mt-3">
+                <div className="flex justify-end gap-1 pt-2 border-t border-[#DDDCD1]/60 mt-3">
                   <button
                     onClick={() => { setEditRodeo(rod); setModalRodeo(true); }}
-                    className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors"
+                    className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors rounded hover:bg-[#E9E5D9]"
+                    title="Editar Rodeo"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteRodeo(rod.id, rod.nombre)}
+                    className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors rounded hover:bg-[#C65B50]/15"
+                    title="Eliminar Rodeo"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -405,28 +464,53 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
                   <th className="py-2.5 px-3">Tipo</th>
                   <th className="py-2.5 px-3 text-right">Carencia Faena</th>
                   <th className="py-2.5 px-3">Dosis Sugerida</th>
+                  <th className="py-2.5 px-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#DDDCD1]">
-                {farmacos.map(f => (
-                  <tr key={f.id} className="hover:bg-[#F7F7F2]/60 transition-colors">
-                    <td className="py-2.5 px-3 font-semibold text-[#24382C]">{f.nombre_comercial}</td>
-                    <td className="py-2.5 px-3 text-[#74796D]">{f.principio_activo || '-'}</td>
-                    <td className="py-2.5 px-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E9E5D9] text-[#24382C]">
-                        {f.tipo}
-                      </span>
+                {farmacos.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-[#74796D]">
+                      No hay fármacos registrados. Haga clic en "Nuevo Fármaco" para agregar uno.
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold">
-                      {f.dias_carencia_faena > 0 ? (
-                        <span className="text-[#C65B50]">{f.dias_carencia_faena} días</span>
-                      ) : (
-                        <span className="text-[#38845A]">0 días (Libre)</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 text-[#74796D]">{f.dosis_sugerida || 'Según indicación'}</td>
                   </tr>
-                ))}
+                ) : (
+                  farmacos.map(f => (
+                    <tr key={f.id} className="hover:bg-[#F7F7F2]/60 transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-[#24382C]">{f.nombre_comercial}</td>
+                      <td className="py-2.5 px-3 text-[#74796D]">{f.principio_activo || '-'}</td>
+                      <td className="py-2.5 px-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#E9E5D9] text-[#24382C]">
+                          {f.tipo}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold">
+                        {f.dias_carencia_faena > 0 ? (
+                          <span className="text-[#C65B50]">{f.dias_carencia_faena} días</span>
+                        ) : (
+                          <span className="text-[#38845A]">0 días (Libre)</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-[#74796D]">{f.dosis_sugerida || 'Según indicación'}</td>
+                      <td className="py-2.5 px-3 text-right">
+                        <button
+                          onClick={() => { setEditFarmaco(f); setModalFarmaco(true); }}
+                          className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors mr-1"
+                          title="Editar Fármaco"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteFarmaco(f.id, f.nombre_comercial)}
+                          className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors"
+                          title="Eliminar Fármaco"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

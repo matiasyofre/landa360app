@@ -69,12 +69,13 @@ export const ganaderiaService = {
     localStorage.removeItem(STORAGE_KEY_MOVIMIENTOS);
     localStorage.removeItem(STORAGE_KEY_COSTOS);
     localStorage.removeItem(STORAGE_KEY_SANIDAD);
+    localStorage.removeItem(STORAGE_KEY_POTREROS);
   },
 
   // --- MAESTROS PARAMÉTRICOS ---
   getCategorias(): CategoriaGanadera[] {
     const data = localStorage.getItem(STORAGE_KEY_CATEGORIAS);
-    if (!data) {
+    if (data === null) {
       localStorage.setItem(STORAGE_KEY_CATEGORIAS, JSON.stringify(DEFAULT_CATEGORIAS));
       return DEFAULT_CATEGORIAS;
     }
@@ -101,7 +102,7 @@ export const ganaderiaService = {
 
   getRodeos(): Rodeo[] {
     const data = localStorage.getItem(STORAGE_KEY_RODEOS);
-    if (!data) {
+    if (data === null) {
       localStorage.setItem(STORAGE_KEY_RODEOS, JSON.stringify(DEFAULT_RODEOS));
       return DEFAULT_RODEOS;
     }
@@ -129,7 +130,7 @@ export const ganaderiaService = {
   getPotreros(): PotreroGanadero[] {
     const data = localStorage.getItem(STORAGE_KEY_POTREROS);
     // Purgar potreros de prueba iniciales (La Legua, El Bajo, Loma Norte, Las Acacias)
-    if (data && (data.includes('La Legua') || data.includes('Loma Norte') || data.includes('Las Acacias'))) {
+    if (data && (data.includes('La Legua') || data.includes('El Bajo') || data.includes('Loma Norte') || data.includes('Las Acacias'))) {
       localStorage.removeItem(STORAGE_KEY_POTREROS);
       return [];
     }
@@ -181,7 +182,7 @@ export const ganaderiaService = {
 
   getRazas(): RazaGanadera[] {
     const data = localStorage.getItem(STORAGE_KEY_RAZAS);
-    if (!data) {
+    if (data === null) {
       localStorage.setItem(STORAGE_KEY_RAZAS, JSON.stringify(DEFAULT_RAZAS));
       return DEFAULT_RAZAS;
     }
@@ -199,7 +200,7 @@ export const ganaderiaService = {
 
   getFarmacos(): FarmacoVeterinario[] {
     const data = localStorage.getItem(STORAGE_KEY_FARMACOS);
-    if (!data) {
+    if (data === null) {
       localStorage.setItem(STORAGE_KEY_FARMACOS, JSON.stringify(DEFAULT_FARMACOS));
       return DEFAULT_FARMACOS;
     }
@@ -277,7 +278,22 @@ export const ganaderiaService = {
   // --- MOVIMIENTOS ÁGILES (FN-3.3) ---
   getMovimientos(): MovimientoHacienda[] {
     const data = localStorage.getItem(STORAGE_KEY_MOVIMIENTOS);
+    // Purgar movimientos de prueba antiguos si contienen potreros de prueba iniciales
+    if (data && (data.includes('La Legua') || data.includes('El Bajo') || data.includes('Loma Norte') || data.includes('Las Acacias'))) {
+      localStorage.removeItem(STORAGE_KEY_MOVIMIENTOS);
+      return [];
+    }
     return data ? JSON.parse(data) : [];
+  },
+
+  deleteMovimiento(id: string): MovimientoHacienda[] {
+    const list = this.getMovimientos().filter(m => m.id !== id);
+    localStorage.setItem(STORAGE_KEY_MOVIMIENTOS, JSON.stringify(list));
+    return list;
+  },
+
+  limpiarMovimientos(): void {
+    localStorage.removeItem(STORAGE_KEY_MOVIMIENTOS);
   },
 
   registrarMovimiento(mov: Omit<MovimientoHacienda, 'id' | 'fecha'>): MovimientoHacienda {
@@ -538,6 +554,16 @@ export const ganaderiaService = {
   getEventosSanitarios(): EventoSanitario[] {
     const data = localStorage.getItem(STORAGE_KEY_SANIDAD);
     return data ? JSON.parse(data) : [];
+  },
+
+  deleteEventoSanitario(id: string): EventoSanitario[] {
+    const list = this.getEventosSanitarios().filter(e => e.id !== id);
+    localStorage.setItem(STORAGE_KEY_SANIDAD, JSON.stringify(list));
+    return list;
+  },
+
+  limpiarEventosSanitarios(): void {
+    localStorage.removeItem(STORAGE_KEY_SANIDAD);
   },
 
   registrarEventoSanitario(evento: Omit<EventoSanitario, 'id'>): EventoSanitario {

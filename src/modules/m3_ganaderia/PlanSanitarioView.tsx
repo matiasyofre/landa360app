@@ -6,13 +6,51 @@
 import React, { useState } from 'react';
 import { ganaderiaService } from '../../services/ganaderiaService';
 import { EventoSanitario, FarmacoVeterinario, Rodeo, PotreroGanadero } from '../../types/ganaderia';
-import { HeartPulse, ShieldCheck, AlertCircle, Plus, Clock } from 'lucide-react';
+import { HeartPulse, ShieldCheck, AlertCircle, Plus, Clock, Trash2 } from 'lucide-react';
 
 export const PlanSanitarioView: React.FC = () => {
   const [eventos, setEventos] = useState<EventoSanitario[]>(ganaderiaService.getEventosSanitarios());
   const [farmacos] = useState<FarmacoVeterinario[]>(ganaderiaService.getFarmacos());
   const [rodeos] = useState<Rodeo[]>(ganaderiaService.getRodeos());
   const [potreros] = useState<PotreroGanadero[]>(ganaderiaService.getPotreros());
+
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const refuerzosPendientes = eventos.filter(e => e.requiere_refuerzo && (!e.fecha_refuerzo || e.fecha_refuerzo >= hoyStr)).length;
+  const enCarencia = eventos.filter(e => e.fecha_fin_carencia && e.fecha_fin_carencia >= hoyStr).length;
+
+  let estadoGeneral = 'Sin tratamientos';
+  let estadoColor = 'text-[#74796D]';
+  let estadoBg = 'bg-[#74796D]/15';
+
+  if (eventos.length > 0) {
+    if (enCarencia > 0) {
+      estadoGeneral = `${enCarencia} Lotes en Carencia`;
+      estadoColor = 'text-[#C65B50]';
+      estadoBg = 'bg-[#C65B50]/15';
+    } else if (refuerzosPendientes > 0) {
+      estadoGeneral = 'Refuerzos Pendientes';
+      estadoColor = 'text-[#D9A441]';
+      estadoBg = 'bg-[#D9A441]/15';
+    } else {
+      estadoGeneral = 'Al Día (SENASA OK)';
+      estadoColor = 'text-[#38845A]';
+      estadoBg = 'bg-[#38845A]/15';
+    }
+  }
+
+  const handleEliminarEvento = (id: string, farmacoNombre?: string) => {
+    if (window.confirm(`¿Está seguro de eliminar el registro de vacunación "${farmacoNombre || 'Tratamiento'}"?`)) {
+      const updated = ganaderiaService.deleteEventoSanitario(id);
+      setEventos(updated);
+    }
+  };
+
+  const handleLimpiarSanidad = () => {
+    if (window.confirm('¿Está seguro de eliminar todo el historial de eventos sanitarios?')) {
+      ganaderiaService.limpiarEventosSanitarios();
+      setEventos([]);
+    }
+  };
 
   const [modalSanitario, setModalSanitario] = useState(false);
   const [formSan, setFormSan] = useState({
@@ -80,15 +118,15 @@ export const PlanSanitarioView: React.FC = () => {
         </button>
       </div>
 
-      {/* AGENDA & ALERTAS DE REFUERZO */}
+      {/* AGENDA & ALERTAS DE REFUERZO DINÁMICAS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-[#FFFFFF] p-5 rounded-2xl border border-[#DDDCD1] shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-[#38845A]/15 flex items-center justify-center text-[#38845A]">
+          <div className={`w-12 h-12 rounded-xl ${estadoBg} flex items-center justify-center ${estadoColor}`}>
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
             <p className="text-xs font-semibold text-[#74796D] uppercase">Estado Sanitario General</p>
-            <p className="text-base font-bold text-[#38845A]">Al Día (SENASA OK)</p>
+            <p className={`text-base font-bold ${estadoColor}`}>{estadoGeneral}</p>
           </div>
         </div>
 
@@ -98,7 +136,9 @@ export const PlanSanitarioView: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-[#74796D] uppercase">Refuerzos Programados</p>
-            <p className="text-base font-bold text-[#24382C]">2 Tropas este mes</p>
+            <p className="text-base font-bold text-[#24382C]">
+              {refuerzosPendientes > 0 ? `${refuerzosPendientes} refuerzos pendientes` : '0 refuerzos pendientes'}
+            </p>
           </div>
         </div>
 
@@ -108,7 +148,9 @@ export const PlanSanitarioView: React.FC = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-[#74796D] uppercase">En Período de Carencia</p>
-            <p className="text-base font-bold text-[#C65B50]">0 Tropas Bloqueadas</p>
+            <p className={`text-base font-bold ${enCarencia > 0 ? 'text-[#C65B50]' : 'text-[#343B2D]'}`}>
+              {enCarencia > 0 ? `${enCarencia} Lotes Bloqueados` : '0 Tropas Bloqueadas'}
+            </p>
           </div>
         </div>
       </div>
@@ -116,7 +158,17 @@ export const PlanSanitarioView: React.FC = () => {
       {/* TABLA DE TRATAMIENTOS REALIZADOS */}
       <div className="bg-[#FFFFFF] rounded-2xl border border-[#DDDCD1] shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-[#DDDCD1] flex justify-between items-center bg-[#F7F7F2]/60">
-          <h4 className="font-bold text-sm text-[#24382C]">Tratamientos y Vacunaciones Registradas</h4>
+          <div className="flex items-center gap-3">
+            <h4 className="font-bold text-sm text-[#24382C]">Tratamientos y Vacunaciones Registradas</h4>
+            {eventos.length > 0 && (
+              <button
+                onClick={handleLimpiarSanidad}
+                className="text-[11px] text-[#C65B50] hover:underline font-semibold"
+              >
+                Limpiar Historial
+              </button>
+            )}
+          </div>
           <span className="text-xs text-[#74796D]">FN-3.8 Vademécum y Carencias</span>
         </div>
 
@@ -132,12 +184,13 @@ export const PlanSanitarioView: React.FC = () => {
                 <th className="py-3 px-4">Carencia Faena</th>
                 <th className="py-3 px-4">Refuerzo</th>
                 <th className="py-3 px-4">Veterinario</th>
+                <th className="py-3 px-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#DDDCD1]">
               {eventos.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-[#74796D]">
+                  <td colSpan={9} className="py-8 text-center text-[#74796D]">
                     No hay eventos sanitarios registrados en este ciclo.
                   </td>
                 </tr>
@@ -174,6 +227,15 @@ export const PlanSanitarioView: React.FC = () => {
                       )}
                     </td>
                     <td className="py-3 px-4 text-[#74796D]">{ev.veterinario}</td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleEliminarEvento(ev.id, ev.farmaco_nombre)}
+                        className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors"
+                        title="Eliminar registro"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

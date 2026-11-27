@@ -17,6 +17,20 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
   const [rodeos] = useState<Rodeo[]>(ganaderiaService.getRodeos());
   const [movimientos, setMovimientos] = useState<MovimientoHacienda[]>(ganaderiaService.getMovimientos());
 
+  const handleEliminarMovimiento = (id: string) => {
+    if (window.confirm('¿Está seguro de eliminar este registro de movimiento?')) {
+      const updated = ganaderiaService.deleteMovimiento(id);
+      setMovimientos(updated);
+    }
+  };
+
+  const handleLimpiarHistorialMovimientos = () => {
+    if (window.confirm('¿Está seguro de vaciar el historial de movimientos de pastoreo?')) {
+      ganaderiaService.limpiarMovimientos();
+      setMovimientos([]);
+    }
+  };
+
   // Modal Movimiento Ágil en 2 Toques (FN-3.3)
   const [modalMov, setModalMov] = useState(false);
   const [movForm, setMovForm] = useState({
@@ -276,10 +290,20 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
 
       {/* HISTORIAL RECIENTE DE MOVIMIENTOS (FN-3.3) */}
       <div className="bg-[#FFFFFF] rounded-2xl border border-[#DDDCD1] shadow-sm p-5">
-        <h4 className="font-bold text-sm text-[#24382C] mb-3 flex items-center gap-2">
-          <ArrowRightLeft className="w-4 h-4 text-[#83A653]" />
-          Últimos Movimientos de Pastoreo Registrados
-        </h4>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-bold text-sm text-[#24382C] flex items-center gap-2">
+            <ArrowRightLeft className="w-4 h-4 text-[#83A653]" />
+            Últimos Movimientos de Pastoreo Registrados
+          </h4>
+          {movimientos.length > 0 && (
+            <button
+              onClick={handleLimpiarHistorialMovimientos}
+              className="text-[11px] text-[#C65B50] hover:underline font-semibold"
+            >
+              Limpiar Historial
+            </button>
+          )}
+        </div>
         {movimientos.length === 0 ? (
           <p className="text-xs text-[#74796D] italic">No hay movimientos registrados recientemente.</p>
         ) : (
@@ -294,10 +318,11 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
                   <th className="py-2.5 px-3 text-right">Cabezas</th>
                   <th className="py-2.5 px-3">Motivo</th>
                   <th className="py-2.5 px-3">Responsable</th>
+                  <th className="py-2.5 px-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#DDDCD1]">
-                {movimientos.slice(0, 5).map(m => (
+                {movimientos.slice(0, 10).map(m => (
                   <tr key={m.id} className="hover:bg-[#F7F7F2]/60">
                     <td className="py-2.5 px-3 font-mono text-[#74796D]">
                       {new Date(m.fecha).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}
@@ -312,6 +337,15 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
                       </span>
                     </td>
                     <td className="py-2.5 px-3 text-[#74796D]">{m.responsable || '-'}</td>
+                    <td className="py-2.5 px-3 text-right">
+                      <button
+                        onClick={() => handleEliminarMovimiento(m.id)}
+                        className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors"
+                        title="Eliminar registro de movimiento"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
