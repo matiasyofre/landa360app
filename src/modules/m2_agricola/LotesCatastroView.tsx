@@ -29,6 +29,7 @@ export const LotesCatastroView: React.FC = () => {
   const [cultivos, setCultivos] = useState<Cultivo[]>([]);
   const [campanas, setCampanas] = useState<Campana[]>([]);
   const [campanaSeleccionadaId, setCampanaSeleccionadaId] = useState<string>('');
+  const [capaMapa, setCapaMapa] = useState<'google' | 'esri' | 'osm'>('google');
   const [modalKmlOpen, setModalKmlOpen] = useState(false);
   const [modalLoteManualOpen, setModalLoteManualOpen] = useState(false);
   const [loteEnEdicion, setLoteEnEdicion] = useState<Lote | null>(null);
@@ -51,6 +52,7 @@ export const LotesCatastroView: React.FC = () => {
   // Referencias de Leaflet
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const geojsonLayersGroupRef = useRef<L.FeatureGroup | null>(null);
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export const LotesCatastroView: React.FC = () => {
   };
 
   // --------------------------------------------------------------------------
-  // INICIALIZACIÓN DEL MAPA LEAFLET CON SATÉLITE ESRI HD
+  // INICIALIZACIÓN DEL MAPA LEAFLET CON SATÉLITE HD & CAPAS DINÁMICAS
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -100,24 +102,59 @@ export const LotesCatastroView: React.FC = () => {
         zoomControl: true
       });
 
-      // Capa Satélite Esri World Imagery (HD)
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Catastro Satelital Campo360',
-        maxZoom: 19
+      // Capa Inicial: Google Satellite Hybrid (con rutas y localidades)
+      const initialLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        attribution: 'Tiles &copy; Google Satelital &mdash; Catastro Campo360',
+        maxZoom: 20
       }).addTo(map);
 
-      // Capa de Límites y Referencias
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        opacity: 0.8
-      }).addTo(map);
-
+      tileLayerRef.current = initialLayer;
       geojsonLayersGroupRef.current = L.featureGroup().addTo(map);
       mapInstanceRef.current = map;
     }
 
     renderizarPoligonosEnMapa();
+
+    const t = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 200);
+
+    return () => clearTimeout(t);
   }, [lotes]);
+
+  const cambiarCapa = (tipo: 'google' | 'esri' | 'osm') => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+
+    let nuevaCapa: L.TileLayer;
+    if (tipo === 'google') {
+      nuevaCapa = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        attribution: 'Tiles &copy; Google Satelital &mdash; Catastro Campo360',
+        maxZoom: 20
+      });
+    } else if (tipo === 'esri') {
+      nuevaCapa = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri World Imagery &mdash; Catastro Campo360',
+        maxZoom: 19
+      });
+    } else {
+      nuevaCapa = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      });
+    }
+
+    nuevaCapa.addTo(map);
+    tileLayerRef.current = nuevaCapa;
+    setCapaMapa(tipo);
+    map.invalidateSize();
+  };
 
   const renderizarPoligonosEnMapa = () => {
     const map = mapInstanceRef.current;
@@ -137,7 +174,7 @@ export const LotesCatastroView: React.FC = () => {
               color: color,
               weight: 3,
               fillColor: color,
-              fillOpacity: 0.4
+              fillOpacity: 0.45
             }
           });
 
@@ -162,7 +199,8 @@ export const LotesCatastroView: React.FC = () => {
 
     if (bounds.length > 0) {
       const combined = bounds.reduce((acc, curr) => acc.extend(curr), bounds[0]);
-      map.fitBounds(combined, { padding: [40, 40] });
+      map.fitBounds(combined, { padding: [50, 50] });
+      setTimeout(() => map.invalidateSize(), 200);
     }
   };
 
@@ -300,21 +338,59 @@ export const LotesCatastroView: React.FC = () => {
         {/* Visor Cartográfico Satelital Esri HD (7 cols) */}
         <div className="lg:col-span-7 flex flex-col gap-3">
           <div className="bg-campo-card border border-campo-borde rounded-2xl p-4 shadow-sm flex flex-col h-[560px]">
-            <div className="flex items-center justify-between pb-3 border-b border-campo-borde mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-campo-borde mb-3">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-campo-verde animate-pulse"></span>
                 <span className="text-xs font-bold text-campo-texto">
-                  Capa Satelital Esri HD &bull; Coordenadas Geodésicas WGS84
+                  Visor Satelital WGS84 &bull; Catastro Oficial
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-campo-muted">
-                Error Geodésico &lt; 0.1%
-              </span>
+
+              {/* Selector de Capa de Satélite */}
+              <div className="flex items-center bg-campo-arena/60 p-0.5 rounded-lg border border-campo-borde text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => cambiarCapa('google')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                    capaMapa === 'google'
+                      ? 'bg-campo-bosque text-white shadow-xs'
+                      : 'text-campo-muted hover:text-campo-texto'
+                  }`}
+                >
+                  🛰️ Google Híbrido
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cambiarCapa('esri')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                    capaMapa === 'esri'
+                      ? 'bg-campo-bosque text-white shadow-xs'
+                      : 'text-campo-muted hover:text-campo-texto'
+                  }`}
+                >
+                  🌍 Esri Satelital
+                </button>
+                <button
+                  type="button"
+                  onClick={() => cambiarCapa('osm')}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                    capaMapa === 'osm'
+                      ? 'bg-campo-bosque text-white shadow-xs'
+                      : 'text-campo-muted hover:text-campo-texto'
+                  }`}
+                >
+                  🗺️ Calles OSM
+                </button>
+              </div>
             </div>
 
             {/* Contenedor del Mapa */}
-            <div className="flex-1 w-full rounded-xl overflow-hidden border border-campo-borde relative z-10">
-              <div ref={mapContainerRef} className="w-full h-full min-h-[460px]" />
+            <div className="flex-1 w-full rounded-xl overflow-hidden border border-campo-borde relative z-10 bg-slate-900">
+              <div 
+                ref={mapContainerRef} 
+                className="w-full h-full min-h-[460px]" 
+                style={{ minHeight: '460px', height: '100%', width: '100%' }}
+              />
             </div>
           </div>
         </div>
