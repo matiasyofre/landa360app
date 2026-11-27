@@ -2,25 +2,28 @@ import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthScreen } from './modules/m1_nucleo/AuthScreen';
 import { OnboardingWizard } from './modules/m1_nucleo/OnboardingWizard';
+import { ColaboradoresManager } from './modules/m1_nucleo/ColaboradoresManager';
 import { RolesManager } from './modules/m1_nucleo/RolesManager';
-import { PrivacyDemoCard } from './modules/m1_nucleo/PrivacyDemoCard';
+import { AuditLogViewer } from './modules/m1_nucleo/AuditLogViewer';
+import { ExportBackupButton } from './modules/m1_nucleo/ExportBackupButton';
 import { 
   Layers, 
   Building2, 
   Wifi, 
   ShieldCheck, 
-  Eye, 
+  Users, 
+  FileText, 
+  Download, 
   RefreshCw,
-  HelpCircle,
-  Sparkles,
   LogOut,
-  User
+  User,
+  Sparkles
 } from 'lucide-react';
 
 function DashboardView() {
   const { user, setUser, tenant, rolActivo, cambiarRolActivo, roles, logout } = useAuth();
   const [showWizard, setShowWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState<'roles' | 'privacidad' | 'onboarding'>('roles');
+  const [activeTab, setActiveTab] = useState<'colaboradores' | 'roles' | 'auditoria' | 'respaldo'>('colaboradores');
 
   // 1. BLOQUEO ZERO-TRUST: Si no está autenticado, muestra Pantalla de Login / Registro
   if (!user) {
@@ -42,7 +45,7 @@ function DashboardView() {
     );
   }
 
-  // 3. DASHBOARD AUTENTICADO
+  // 3. DASHBOARD DEL MÓDULO 1 (NÚCLEO Y SEGURIDAD)
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       {/* Top Navbar */}
@@ -55,7 +58,7 @@ function DashboardView() {
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-base tracking-tight text-white">Campo360</span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold">
-                Escenario A • Módulo 1 Activo
+                Módulo 1 &bull; Seguridad & RLS
               </span>
             </div>
             {/* Establecimiento activo */}
@@ -118,7 +121,7 @@ function DashboardView() {
       {/* Main Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
         
-        {/* Tarjeta de Resumen del Campo (Tenant FN-1.1 & FN-1.6) */}
+        {/* Banner del Establecimiento */}
         <div className="bg-gradient-to-r from-emerald-950/40 via-slate-900/90 to-slate-950 p-5 rounded-2xl border border-emerald-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -130,10 +133,10 @@ function DashboardView() {
               </span>
             </div>
             <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-              Gestión de Permisos por Rol y Matriz de Privacidad
+              Consola de Administración y Seguridad del Campo
             </h1>
             <p className="text-xs text-slate-300 max-w-3xl">
-              Configurá los roles de tu establecimiento, prendé o apagá funciones técnicas y corroborá cómo la Matriz de Privacidad oculta tarifas y costos al personal a campo.
+              Gestión de colaboradores, roles dinámicos, permisos con privacidad estricta y bitácora de auditoría inmutable de {tenant.nombreFantasia}.
             </p>
           </div>
 
@@ -150,66 +153,71 @@ function DashboardView() {
           </div>
         </div>
 
-        {/* Pestañas de Navegación del Módulo 1 */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+        {/* Pestañas de Navegación Oficiales del Módulo 1 (FN-1.1 a FN-1.6) */}
+        <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('colaboradores')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'colaboradores'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Colaboradores (FN-1.2)</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('roles')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
               activeTab === 'roles'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                 : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>Gestor de Roles Dinámicos (FN-1.2)</span>
+            <span>Roles y Permisos (FN-1.2 & FN-1.3)</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('privacidad')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'privacidad'
+            onClick={() => setActiveTab('auditoria')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'auditoria'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                 : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
             }`}
           >
-            <Eye className="w-4 h-4" />
-            <span>Simulador de Privacidad a Campo (FN-1.3)</span>
+            <FileText className="w-4 h-4" />
+            <span>Bitácora de Auditoría (FN-1.4)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('respaldo')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'respaldo'
+                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            <Download className="w-4 h-4" />
+            <span>Respaldo en 1 Clic (FN-1.5)</span>
           </button>
 
           <button
             onClick={() => setShowWizard(true)}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors ml-auto flex items-center gap-1.5"
+            className="px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors ml-auto flex items-center gap-1.5 whitespace-nowrap"
           >
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Asistente "Armá tu campo" (FN-1.6)</span>
+            <span>"Armá tu campo" (FN-1.6)</span>
           </button>
         </div>
 
-        {/* Vista Activa */}
-        {activeTab === 'roles' && (
-          <div className="space-y-6">
-            <RolesManager />
-            <PrivacyDemoCard />
-          </div>
-        )}
+        {/* Vistas Reales y Operativas del Módulo 1 */}
+        {activeTab === 'colaboradores' && <ColaboradoresManager />}
+        {activeTab === 'roles' && <RolesManager />}
+        {activeTab === 'auditoria' && <AuditLogViewer />}
+        {activeTab === 'respaldo' && <ExportBackupButton />}
 
-        {activeTab === 'privacidad' && (
-          <div className="space-y-6">
-            <PrivacyDemoCard />
-            <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 text-xs text-slate-300 space-y-2">
-              <h4 className="font-bold text-white flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-emerald-400" />
-                <span>¿Cómo funciona el Ocultamiento Automático de Costos?</span>
-              </h4>
-              <p>
-                En el campo argentino, es práctica habitual que el capataz, tractoristas y aplicadores registren labores en tablets o celulares sin tener acceso a las tarifas pactadas con contratistas ni a los precios de compra de los insumos en galpón.
-              </p>
-              <p>
-                Campo360 implementa la <strong>Matriz de Privacidad Estricta</strong>: si el rol asignado no cuenta con la función <code className="text-emerald-300 font-mono">FN-1.3 (Ver Precios y Finanzas)</code>, las respuestas del backend son sanitizadas a nivel de datos físicos (kilos, litros, hectáreas), garantizando confidencialidad absoluta.
-              </p>
-            </div>
-          </div>
-        )}
       </main>
 
       {/* Footer */}
