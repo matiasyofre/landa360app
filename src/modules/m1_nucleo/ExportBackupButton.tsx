@@ -19,7 +19,6 @@ export function ExportBackupButton() {
     setIsExporting(true);
 
     try {
-      // 1. Recolectar datos del tenant en Supabase
       const [tenantsRes, rolesRes, usuariosRes, auditRes] = await Promise.all([
         supabase.from('tenants').select('*').eq('id', tenant.id),
         supabase.from('roles').select('*').eq('tenant_id', tenant.id),
@@ -43,7 +42,6 @@ export function ExportBackupButton() {
         bitacoraAuditoria: auditRes.data || []
       };
 
-      // 2. Generar archivo JSON para descarga directa
       const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
         JSON.stringify(backupData, null, 2)
       )}`;
@@ -56,7 +54,6 @@ export function ExportBackupButton() {
       downloadAnchor.click();
       downloadAnchor.remove();
 
-      // 3. Registrar exportación en la bitácora inmutable
       await supabase.from('audit_log').insert({
         tenant_id: tenant.id,
         tabla_afectada: 'sistema',
@@ -73,20 +70,20 @@ export function ExportBackupButton() {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-4">
+    <div className="bg-campo-card border border-campo-borde rounded-2xl p-6 space-y-4 shadow-sm text-campo-texto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-campo-borde pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-campo-arena text-campo-bosque border border-campo-borde">
               FN-1.5 &bull; Soberanía Total de Datos
             </span>
-            <span className="text-xs text-slate-400">Resguardo Patrimonial</span>
+            <span className="text-xs text-campo-muted">Resguardo Patrimonial</span>
           </div>
-          <h3 className="text-base font-bold text-white mt-1">
+          <h3 className="text-lg font-bold text-campo-texto mt-1">
             Respaldo Integral y Exportación en 1 Clic
           </h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-campo-muted">
             Tus datos son 100% tuyos. Podés descargar una copia completa y estructurada de la información de tu campo en cualquier momento sin depender de nadie.
           </p>
         </div>
@@ -94,7 +91,7 @@ export function ExportBackupButton() {
         <button
           onClick={handleExport}
           disabled={isExporting}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider font-mono transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 shrink-0 self-start sm:self-auto"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-campo-verde hover:bg-campo-oliva text-white font-bold text-xs uppercase tracking-wider font-mono transition-all shadow-sm disabled:opacity-50 shrink-0 self-start sm:self-auto"
         >
           {isExporting ? (
             <>
@@ -112,33 +109,33 @@ export function ExportBackupButton() {
 
       {/* Grid de Estado del Respaldo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-            <Database className="w-4 h-4" />
+        <div className="bg-campo-blanco p-4 rounded-xl border border-campo-borde flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-campo-arena text-campo-bosque flex items-center justify-center shrink-0">
+            <Database className="w-5 h-5 text-campo-verde" />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-400 block uppercase">Formato de Exportación</span>
-            <span className="text-xs font-bold text-white font-mono">JSON Estándar Universal</span>
+            <span className="text-[10px] font-mono text-campo-muted block uppercase font-semibold">Formato de Exportación</span>
+            <span className="text-xs font-bold text-campo-texto font-mono">JSON Estándar Universal</span>
           </div>
         </div>
 
-        <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-4 h-4" />
+        <div className="bg-campo-blanco p-4 rounded-xl border border-campo-borde flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-campo-arena text-campo-bosque flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-5 h-5 text-campo-oliva" />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-400 block uppercase">Cifrado de Base</span>
-            <span className="text-xs font-bold text-white font-mono">PostgreSQL AES-256</span>
+            <span className="text-[10px] font-mono text-campo-muted block uppercase font-semibold">Cifrado de Base</span>
+            <span className="text-xs font-bold text-campo-texto font-mono">PostgreSQL AES-256</span>
           </div>
         </div>
 
-        <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
-            <HardDrive className="w-4 h-4" />
+        <div className="bg-campo-blanco p-4 rounded-xl border border-campo-borde flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-campo-arena text-campo-bosque flex items-center justify-center shrink-0">
+            <HardDrive className="w-5 h-5 text-campo-tierra" />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-400 block uppercase">Última Descarga</span>
-            <span className="text-xs font-bold text-emerald-400 font-mono">
+            <span className="text-[10px] font-mono text-campo-muted block uppercase font-semibold">Última Descarga</span>
+            <span className="text-xs font-bold text-campo-oliva font-mono">
               {lastExportDate ? `Hoy a las ${lastExportDate}` : 'Sin descargas previas'}
             </span>
           </div>

@@ -7,18 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
-          950: '#022c22',
+        campo: {
+          bosque: '#24382C',     // Verde bosque profundo (Navbar, sidebar)
+          oliva: '#536747',      // Verde oliva (Acciones secundarias)
+          verde: '#83A653',      // Verde natural (Botones principales, acentos)
+          tierra: '#B6A77D',     // Tierra suave (Categorías, detalles)
+          arena: '#E9E5D9',      // Arena (Fondos secundarios)
+          blanco: '#F7F7F2',     // Blanco cálido (Fondo general)
+          texto: '#343B2D',      // Texto principal (Títulos y contenido)
+          muted: '#74796D',      // Texto secundario (Descripciones)
+          borde: '#DDDCD1',      // Bordes (Separadores y tarjetas)
+          card: '#FFFFFF',       // Blanco puro (Tarjetas y formularios)
+          exito: '#38845A',      // Verde éxito
+          alerta: '#D9A441',     // Amarillo alerta
+          error: '#C65B50',      // Rojo error
+          info: '#52849A',       // Azul información
         }
       }
     },

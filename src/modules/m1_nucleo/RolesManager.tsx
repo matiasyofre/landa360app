@@ -65,7 +65,6 @@ export function RolesManager() {
     if (!nuevoNombre.trim()) return;
 
     setIsSaving(true);
-    // Rol nuevo nace con permisos operativos base
     const funcionesIniciales = ['fn_2_5_cierre_labor', 'fn_4_1_stock_galpon', 'fn_6_1_pluviometro'];
     await crearNuevoRol(nuevoNombre, nuevaDesc, funcionesIniciales);
     setIsSaving(false);
@@ -80,12 +79,12 @@ export function RolesManager() {
     <div className="space-y-6">
       {/* Notificación de guardado */}
       {mensajeGuardado && (
-        <div className="p-3 bg-emerald-950/80 border border-emerald-500 rounded-xl text-emerald-300 text-xs flex items-center justify-between animate-in fade-in">
+        <div className="p-3 bg-emerald-50 border border-campo-exito/40 rounded-xl text-campo-exito text-xs flex items-center justify-between animate-in fade-in">
           <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-400" />
-            <span>{mensajeGuardado}</span>
+            <Check className="w-4 h-4 text-campo-exito" />
+            <span className="font-semibold">{mensajeGuardado}</span>
           </div>
-          <span className="font-mono text-[10px] text-emerald-400 bg-emerald-900/50 px-2 py-0.5 rounded">
+          <span className="font-mono text-[10px] text-campo-bosque bg-campo-arena px-2 py-0.5 rounded border border-campo-borde">
             Auto-Sync Supabase
           </span>
         </div>
@@ -97,14 +96,14 @@ export function RolesManager() {
         {/* COLUMNA IZQUIERDA: Roles (FN-1.2) */}
         <div className="lg:col-span-4 space-y-3">
           <div className="flex items-center justify-between pb-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-2">
-              <Users className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-campo-texto font-mono flex items-center gap-2">
+              <Users className="w-4 h-4 text-campo-verde" />
               <span>Roles del Establecimiento</span>
             </h3>
 
             <button
               onClick={() => setModalNuevoRol(true)}
-              className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 transition-colors"
+              className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-campo-verde text-white hover:bg-campo-oliva transition-colors shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Nuevo Rol</span>
@@ -120,45 +119,45 @@ export function RolesManager() {
                 <div
                   key={r.id}
                   onClick={() => cambiarRolActivo(r.id)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                     isSelected
-                      ? 'bg-emerald-950/40 border-emerald-500/70 shadow-lg shadow-emerald-950/40'
-                      : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
+                      ? 'bg-campo-arena border-campo-verde shadow-sm'
+                      : 'bg-campo-card border-campo-borde hover:border-campo-oliva'
                   }`}
                 >
                   <div className="min-w-0 pr-2">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                      <span className={`text-xs font-bold truncate ${isSelected ? 'text-campo-bosque' : 'text-campo-texto'}`}>
                         {r.nombre}
                       </span>
                       {r.esSistema && (
-                        <span className="text-[9px] font-mono uppercase bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded font-semibold shrink-0">
+                        <span className="text-[9px] font-mono uppercase bg-campo-blanco text-campo-muted px-1.5 py-0.5 rounded border border-campo-borde font-semibold shrink-0">
                           Nativo
                         </span>
                       )}
                     </div>
                     {r.descripcion && (
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{r.descripcion}</p>
+                      <p className="text-[11px] text-campo-muted truncate mt-0.5">{r.descripcion}</p>
                     )}
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] font-mono text-emerald-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                      <span className="text-[10px] font-mono text-campo-texto bg-campo-card px-2 py-0.5 rounded border border-campo-borde">
                         {r.funcionesIds.length} funciones
                       </span>
 
                       {!tienePermisoPrecios ? (
-                        <span className="text-[9px] font-mono text-amber-400 bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-900/40 flex items-center gap-1">
+                        <span className="text-[9px] font-mono text-campo-alerta bg-amber-50 px-1.5 py-0.5 rounded border border-campo-alerta/30 flex items-center gap-1 font-semibold">
                           <Lock className="w-2.5 h-2.5" />
                           <span>Sin costos</span>
                         </span>
                       ) : (
-                        <span className="text-[9px] font-mono text-emerald-300 bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-900/40">
+                        <span className="text-[9px] font-mono text-campo-exito bg-emerald-50 px-1.5 py-0.5 rounded border border-campo-exito/30 font-semibold">
                           Finanzas OK
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${isSelected ? 'text-emerald-400 translate-x-1' : 'text-slate-600'}`} />
+                  <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${isSelected ? 'text-campo-verde translate-x-1' : 'text-campo-muted'}`} />
                 </div>
               );
             })}
@@ -167,20 +166,20 @@ export function RolesManager() {
 
         {/* COLUMNA DERECHA: Asignación Granular de Funciones */}
         <div className="lg:col-span-8 space-y-4">
-          <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-campo-card p-4 rounded-2xl border border-campo-borde shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-mono uppercase text-slate-400">Editando permisos para:</span>
-                <span className="text-sm font-bold text-white">{rolActivo?.nombre}</span>
+                <ShieldCheck className="w-4 h-4 text-campo-verde" />
+                <span className="text-xs font-mono uppercase text-campo-muted">Editando permisos para:</span>
+                <span className="text-sm font-bold text-campo-texto">{rolActivo?.nombre}</span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Activá o desactivá funciones para este rol. Cada cambio impacta en la tabla <code className="text-emerald-400 font-mono text-[11px]">rol_funciones</code>.
+              <p className="text-xs text-campo-muted mt-0.5">
+                Activá o desactivá funciones para este rol. Cada cambio impacta en la tabla <code className="text-campo-oliva font-mono text-[11px]">rol_funciones</code>.
               </p>
             </div>
 
             {isSaving && (
-              <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-900/50 shrink-0">
+              <span className="flex items-center gap-1.5 text-xs font-mono text-campo-oliva bg-campo-arena px-2.5 py-1 rounded-lg border border-campo-borde shrink-0">
                 <Save className="w-3.5 h-3.5 animate-spin" />
                 <span>Guardando...</span>
               </span>
@@ -188,7 +187,7 @@ export function RolesManager() {
           </div>
 
           {/* Tabs de Módulos M1 a M7 */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-800">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-campo-borde">
             {modulos.map((m) => {
               const isSelected = selectedModule === m.id;
               const Icon = m.icon;
@@ -196,10 +195,10 @@ export function RolesManager() {
                 <button
                   key={m.id}
                   onClick={() => setSelectedModule(m.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                     isSelected
-                      ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                      ? 'bg-campo-verde text-white font-bold shadow-xs'
+                      : 'bg-campo-card text-campo-muted hover:text-campo-texto border border-campo-borde'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -218,34 +217,34 @@ export function RolesManager() {
                 <div
                   key={func.id}
                   onClick={() => toggleFuncion(func.id)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
                     isChecked
-                      ? 'bg-slate-900/90 border-emerald-900/50 hover:border-emerald-600/60'
-                      : 'bg-slate-950/40 border-slate-800/40 opacity-55 hover:opacity-100'
+                      ? 'bg-campo-card border-campo-verde shadow-xs'
+                      : 'bg-campo-blanco border-campo-borde opacity-60 hover:opacity-100'
                   }`}
                 >
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-emerald-400 bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-900/60">
+                      <span className="font-mono text-xs font-bold text-campo-bosque bg-campo-arena px-2 py-0.5 rounded border border-campo-borde">
                         {func.codigo}
                       </span>
-                      <span className="text-xs sm:text-sm font-bold text-white">
+                      <span className="text-xs sm:text-sm font-bold text-campo-texto">
                         {func.nombre}
                       </span>
                       {func.esSensiblePrecio && (
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-semibold">
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-50 text-campo-alerta border border-campo-alerta/30 flex items-center gap-1 font-semibold">
                           <Lock className="w-2.5 h-2.5" />
                           <span>Dato Económico Sensible</span>
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-400 leading-snug">{func.descripcion}</p>
+                    <p className="text-xs text-campo-muted leading-snug">{func.descripcion}</p>
                   </div>
 
                   <div className="shrink-0 pt-0.5">
                     <div
                       className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors ${
-                        isChecked ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/40' : 'border border-slate-700 bg-slate-900'
+                        isChecked ? 'bg-campo-verde text-white shadow-xs' : 'border border-campo-borde bg-campo-blanco'
                       }`}
                     >
                       {isChecked && <CheckCircle2 className="w-3.5 h-3.5 stroke-[3]" />}
@@ -260,52 +259,52 @@ export function RolesManager() {
 
       {/* Modal Crear Nuevo Rol */}
       {modalNuevoRol && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-emerald-900/50 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-2 text-white font-bold text-base">
-              <Users className="w-5 h-5 text-emerald-400" />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-campo-card border border-campo-borde rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 text-campo-texto">
+            <div className="flex items-center gap-2 font-bold text-base text-campo-texto">
+              <Users className="w-5 h-5 text-campo-verde" />
               <span>Crear Rol Personalizado</span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-campo-muted">
               Creá un rol a medida (ej: Tractorista, Veterinario, Asesor Agronómico) y luego asignale funciones específicas.
             </p>
 
             <form onSubmit={handleCrearRol} className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-300">Nombre del Rol *</label>
+                <label className="text-xs font-medium text-campo-texto">Nombre del Rol *</label>
                 <input
                   type="text"
                   value={nuevoNombre}
                   onChange={(e) => setNuevoNombre(e.target.value)}
                   placeholder="Ej: Tractorista / Maquinista"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-campo-blanco border border-campo-borde rounded-xl px-3 py-2 text-xs text-campo-texto focus:outline-none focus:border-campo-verde"
                   autoFocus
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-300">Descripción u Objetivo</label>
+                <label className="text-xs font-medium text-campo-texto">Descripción u Objetivo</label>
                 <input
                   type="text"
                   value={nuevaDesc}
                   onChange={(e) => setNuevaDesc(e.target.value)}
                   placeholder="Ej: Cierre de labores mecánicas y pulverización a campo"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-campo-blanco border border-campo-borde rounded-xl px-3 py-2 text-xs text-campo-texto focus:outline-none focus:border-campo-verde"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-campo-borde">
                 <button
                   type="button"
                   onClick={() => setModalNuevoRol(false)}
-                  className="text-xs font-semibold px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700"
+                  className="text-xs font-semibold px-4 py-2 rounded-xl bg-campo-arena text-campo-texto hover:bg-campo-borde"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={!nuevoNombre.trim()}
-                  className="text-xs font-bold px-4 py-2 rounded-lg bg-emerald-500 text-slate-950 hover:bg-emerald-400 font-mono disabled:opacity-50"
+                  className="text-xs font-bold px-4 py-2 rounded-xl bg-campo-verde text-white hover:bg-campo-oliva font-mono disabled:opacity-50"
                 >
                   Crear Rol
                 </button>
