@@ -46,10 +46,6 @@ const DEFAULT_RODEOS: Rodeo[] = [
   { id: 'rod-3', tenant_id: 'default', nombre: 'Vaquillonas Reposición', finalidad: 'Recría', color_identificador: '#B6A77D', activo: true },
 ];
 
-const DEFAULT_POTREROS: PotreroGanadero[] = [
-  { id: 'pot-1', tenant_id: 'default', nombre: 'Potrero 1', superficie_ha: 100, recurso_forrajero: 'Pastura Cultivada', receptividad_objetivo_ev_ha: 1.00, dias_descanso_actual: 0, activo: true },
-  { id: 'pot-2', tenant_id: 'default', nombre: 'Potrero 2', superficie_ha: 80, recurso_forrajero: 'Campo Natural', receptividad_objetivo_ev_ha: 0.70, dias_descanso_actual: 0, activo: true },
-];
 
 const DEFAULT_RAZAS: RazaGanadera[] = [
   { id: 'raz-1', tenant_id: 'default', nombre: 'Angus Negro', activo: true },
@@ -132,8 +128,12 @@ export const ganaderiaService = {
 
   getPotreros(): PotreroGanadero[] {
     const data = localStorage.getItem(STORAGE_KEY_POTREROS);
-    const potreros: PotreroGanadero[] = data ? JSON.parse(data) : DEFAULT_POTREROS;
-    if (!data) localStorage.setItem(STORAGE_KEY_POTREROS, JSON.stringify(DEFAULT_POTREROS));
+    // Purgar potreros de prueba iniciales (La Legua, El Bajo, Loma Norte, Las Acacias)
+    if (data && (data.includes('La Legua') || data.includes('Loma Norte') || data.includes('Las Acacias'))) {
+      localStorage.removeItem(STORAGE_KEY_POTREROS);
+      return [];
+    }
+    const potreros: PotreroGanadero[] = data ? JSON.parse(data) : [];
 
     // Calcular carga EV, cabezas y EV/ha
     const animales = this.getAnimales().filter(a => a.estado === 'Activo');
@@ -159,10 +159,11 @@ export const ganaderiaService = {
   },
 
   savePotrero(potrero: PotreroGanadero): PotreroGanadero[] {
-    const list = this.getPotreros();
+    const data = localStorage.getItem(STORAGE_KEY_POTREROS);
+    const list: PotreroGanadero[] = data ? JSON.parse(data) : [];
     const idx = list.findIndex(p => p.id === potrero.id);
     if (idx >= 0) {
-      list[idx] = potrero;
+      list[idx] = { ...list[idx], ...potrero };
     } else {
       list.push(potrero);
     }
@@ -171,7 +172,9 @@ export const ganaderiaService = {
   },
 
   deletePotrero(id: string): PotreroGanadero[] {
-    const list = this.getPotreros().filter(p => p.id !== id);
+    const data = localStorage.getItem(STORAGE_KEY_POTREROS);
+    let list: PotreroGanadero[] = data ? JSON.parse(data) : [];
+    list = list.filter(p => p.id !== id);
     localStorage.setItem(STORAGE_KEY_POTREROS, JSON.stringify(list));
     return this.getPotreros();
   },

@@ -5,17 +5,18 @@
 
 import React, { useState } from 'react';
 import { ganaderiaService } from '../../services/ganaderiaService';
-import { CategoriaGanadera, Rodeo, FarmacoVeterinario } from '../../types/ganaderia';
-import { Settings, Plus, Edit2, ShieldCheck, HeartPulse, Layers } from 'lucide-react';
+import { CategoriaGanadera, Rodeo, FarmacoVeterinario, PotreroGanadero } from '../../types/ganaderia';
+import { Settings, Plus, Edit2, Trash2, ShieldCheck, HeartPulse, Layers, Compass } from 'lucide-react';
 
 interface Props {
   onDataChanged?: () => void;
 }
 
 export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
-  const [tab, setTab] = useState<'categorias' | 'rodeos' | 'farmacos'>('categorias');
+  const [tab, setTab] = useState<'categorias' | 'rodeos' | 'potreros' | 'farmacos'>('categorias');
   const [categorias, setCategorias] = useState<CategoriaGanadera[]>(ganaderiaService.getCategorias());
   const [rodeos, setRodeos] = useState<Rodeo[]>(ganaderiaService.getRodeos());
+  const [potreros, setPotreros] = useState<PotreroGanadero[]>(ganaderiaService.getPotreros());
   const [farmacos, setFarmacos] = useState<FarmacoVeterinario[]>(ganaderiaService.getFarmacos());
 
   // Form states
@@ -34,6 +35,15 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
     finalidad: 'Cría',
     color_identificador: '#83A653',
     activo: true
+  });
+
+  const [modalPotrero, setModalPotrero] = useState<boolean>(false);
+  const [editPotrero, setEditPotrero] = useState<Partial<PotreroGanadero>>({
+    nombre: '',
+    superficie_ha: 100,
+    recurso_forrajero: 'Pastura Cultivada',
+    receptividad_objetivo_ev_ha: 1.0,
+    dias_descanso_actual: 0
   });
 
   const [modalFarmaco, setModalFarmaco] = useState<boolean>(false);
@@ -81,6 +91,34 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
     setRodeos(updated);
     setModalRodeo(false);
     onDataChanged?.();
+  };
+
+  // Handlers Potreros
+  const handleSavePotrero = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editPotrero.nombre || !editPotrero.superficie_ha) return;
+    const item: PotreroGanadero = {
+      id: editPotrero.id || `pot-${Date.now()}`,
+      tenant_id: 'default',
+      nombre: editPotrero.nombre,
+      superficie_ha: Number(editPotrero.superficie_ha),
+      recurso_forrajero: editPotrero.recurso_forrajero || 'Campo Natural',
+      receptividad_objetivo_ev_ha: Number(editPotrero.receptividad_objetivo_ev_ha) || 0.8,
+      dias_descanso_actual: Number(editPotrero.dias_descanso_actual) || 0,
+      activo: true
+    };
+    const updated = ganaderiaService.savePotrero(item);
+    setPotreros(updated);
+    setModalPotrero(false);
+    onDataChanged?.();
+  };
+
+  const handleDeletePotrero = (id: string, nombre: string) => {
+    if (window.confirm(`¿Está seguro de eliminar el potrero "${nombre}"?`)) {
+      const updated = ganaderiaService.deletePotrero(id);
+      setPotreros(updated);
+      onDataChanged?.();
+    }
   };
 
   // Handlers Fármacos
@@ -135,6 +173,15 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             Rodeos / Tropas ({rodeos.length})
+          </button>
+          <button
+            onClick={() => setTab('potreros')}
+            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+              tab === 'potreros' ? 'bg-[#24382C] text-white shadow-sm' : 'text-[#343B2D] hover:text-[#24382C]'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            Potreros ({potreros.length})
           </button>
           <button
             onClick={() => setTab('farmacos')}
@@ -255,6 +302,77 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* CONTENIDO TAB POTREROS */}
+      {tab === 'potreros' && (
+        <div className="mt-4">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-xs font-medium text-[#74796D]">
+              Catastro de potreros ganaderos: superficie, tipo de forraje y receptividad objetivo en EV/ha.
+            </span>
+            <button
+              onClick={() => {
+                setEditPotrero({ nombre: '', superficie_ha: 100, recurso_forrajero: 'Pastura Cultivada', receptividad_objetivo_ev_ha: 1.0, dias_descanso_actual: 0 });
+                setModalPotrero(true);
+              }}
+              className="flex items-center gap-1 bg-[#83A653] hover:bg-[#536747] text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Nuevo Potrero
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-[#343B2D]">
+              <thead className="bg-[#F7F7F2] text-[#74796D] uppercase text-[10px] tracking-wider border-b border-[#DDDCD1]">
+                <tr>
+                  <th className="py-2.5 px-3">Potrero</th>
+                  <th className="py-2.5 px-3 text-right">Superficie (ha)</th>
+                  <th className="py-2.5 px-3">Recurso Forrajero</th>
+                  <th className="py-2.5 px-3 text-right">Receptividad (EV/ha)</th>
+                  <th className="py-2.5 px-3 text-right">Días Descanso</th>
+                  <th className="py-2.5 px-3 text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#DDDCD1]">
+                {potreros.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-[#74796D]">
+                      No hay potreros registrados. Haga clic en "Nuevo Potrero" para agregar uno.
+                    </td>
+                  </tr>
+                ) : (
+                  potreros.map(pot => (
+                    <tr key={pot.id} className="hover:bg-[#F7F7F2]/60 transition-colors">
+                      <td className="py-2.5 px-3 font-semibold text-[#24382C]">{pot.nombre}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-[#24382C]">{pot.superficie_ha} ha</td>
+                      <td className="py-2.5 px-3 text-[#74796D]">{pot.recurso_forrajero}</td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-[#83A653]">{pot.receptividad_objetivo_ev_ha} EV/ha</td>
+                      <td className="py-2.5 px-3 text-right font-mono text-[#74796D]">{pot.dias_descanso_actual} días</td>
+                      <td className="py-2.5 px-3 text-right">
+                        <button
+                          onClick={() => { setEditPotrero(pot); setModalPotrero(true); }}
+                          className="p-1 text-[#74796D] hover:text-[#24382C] transition-colors mr-1"
+                          title="Editar Potrero"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePotrero(pot.id, pot.nombre)}
+                          className="p-1 text-[#74796D] hover:text-[#C65B50] transition-colors"
+                          title="Eliminar Potrero"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -461,6 +579,88 @@ export const GanaderiaParamManager: React.FC<Props> = ({ onDataChanged }) => {
                 className="px-4 py-2 bg-[#83A653] hover:bg-[#536747] text-white rounded-lg text-xs font-bold transition-colors"
               >
                 Guardar Rodeo
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* MODAL POTRERO */}
+      {modalPotrero && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <form onSubmit={handleSavePotrero} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-[#DDDCD1]">
+            <h3 className="text-base font-bold text-[#24382C] mb-4">
+              {editPotrero.id ? 'Editar Potrero Ganadero' : 'Nuevo Potrero Ganadero'}
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-[#343B2D] mb-1">Nombre o Número de Potrero</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Potrero 1 - El Trébol"
+                  value={editPotrero.nombre}
+                  onChange={e => setEditPotrero({ ...editPotrero, nombre: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg focus:outline-none focus:border-[#83A653]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-[#343B2D] mb-1">Superficie (ha)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    required
+                    value={editPotrero.superficie_ha}
+                    onChange={e => setEditPotrero({ ...editPotrero, superficie_ha: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg font-mono focus:outline-none focus:border-[#83A653]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-[#343B2D] mb-1">Receptividad Obj. (EV/ha)</label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    value={editPotrero.receptividad_objetivo_ev_ha}
+                    onChange={e => setEditPotrero({ ...editPotrero, receptividad_objetivo_ev_ha: parseFloat(e.target.value) })}
+                    className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg font-mono focus:outline-none focus:border-[#83A653]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block font-semibold text-[#343B2D] mb-1">Recurso Forrajero / Pastura</label>
+                <input
+                  type="text"
+                  placeholder="Ej. Alfalfa / Festuca o Campo Natural"
+                  value={editPotrero.recurso_forrajero}
+                  onChange={e => setEditPotrero({ ...editPotrero, recurso_forrajero: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg focus:outline-none focus:border-[#83A653]"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-[#343B2D] mb-1">Días de Descanso Acumulados</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={editPotrero.dias_descanso_actual || 0}
+                  onChange={e => setEditPotrero({ ...editPotrero, dias_descanso_actual: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg font-mono focus:outline-none focus:border-[#83A653]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                type="button"
+                onClick={() => setModalPotrero(false)}
+                className="px-4 py-2 border border-[#DDDCD1] rounded-lg text-xs font-semibold text-[#74796D] hover:bg-[#F7F7F2]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-[#83A653] hover:bg-[#536747] text-white rounded-lg text-xs font-bold transition-colors"
+              >
+                Guardar Potrero
               </button>
             </div>
           </form>

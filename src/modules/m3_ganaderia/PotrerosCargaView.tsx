@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { ganaderiaService } from '../../services/ganaderiaService';
 import { PotreroGanadero, Rodeo, MovimientoHacienda } from '../../types/ganaderia';
-import { Compass, ArrowRightLeft, Plus, Clock, Trees } from 'lucide-react';
+import { Compass, ArrowRightLeft, Plus, Clock, Trees, Edit2, Trash2 } from 'lucide-react';
 
 interface Props {
   onDataChanged?: () => void;
@@ -28,22 +28,53 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
     observaciones: ''
   });
 
-  // Modal Nuevo Potrero
+  // Modal Crear / Editar Potrero
   const [modalPotrero, setModalPotrero] = useState(false);
   const [nuevoPotrero, setNuevoPotrero] = useState<Partial<PotreroGanadero>>({
     nombre: '',
     superficie_ha: 100,
-    recurso_forrajero: 'Pastura Polifítica (Alfalfa / Festuca)',
+    recurso_forrajero: 'Pastura Cultivada',
     receptividad_objetivo_ev_ha: 1.0,
     dias_descanso_actual: 0
   });
 
-  const handleCrearPotrero = (e: React.FormEvent) => {
+  const handleAbrirNuevo = () => {
+    setNuevoPotrero({
+      nombre: '',
+      superficie_ha: 100,
+      recurso_forrajero: 'Pastura Cultivada',
+      receptividad_objetivo_ev_ha: 1.0,
+      dias_descanso_actual: 0
+    });
+    setModalPotrero(true);
+  };
+
+  const handleEditarPotrero = (pot: PotreroGanadero) => {
+    setNuevoPotrero({
+      id: pot.id,
+      nombre: pot.nombre,
+      superficie_ha: pot.superficie_ha,
+      recurso_forrajero: pot.recurso_forrajero,
+      receptividad_objetivo_ev_ha: pot.receptividad_objetivo_ev_ha,
+      dias_descanso_actual: pot.dias_descanso_actual
+    });
+    setModalPotrero(true);
+  };
+
+  const handleEliminarPotrero = (id: string, nombre: string) => {
+    if (window.confirm(`¿Está seguro de que desea eliminar el potrero "${nombre}"?`)) {
+      ganaderiaService.deletePotrero(id);
+      setPotreros(ganaderiaService.getPotreros());
+      onDataChanged?.();
+    }
+  };
+
+  const handleGuardarPotrero = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nuevoPotrero.nombre || !nuevoPotrero.superficie_ha) return;
 
     const item: PotreroGanadero = {
-      id: `pot-${Date.now()}`,
+      id: nuevoPotrero.id || `pot-${Date.now()}`,
       tenant_id: 'default',
       nombre: nuevoPotrero.nombre,
       superficie_ha: Number(nuevoPotrero.superficie_ha),
@@ -100,7 +131,7 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
 
         <div className="flex items-center gap-2 w-full md:w-auto">
           <button
-            onClick={() => setModalPotrero(true)}
+            onClick={handleAbrirNuevo}
             className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 border border-[#DDDCD1] hover:bg-[#F7F7F2] text-[#24382C] text-xs font-semibold rounded-xl transition-all"
           >
             <Plus className="w-4 h-4 text-[#83A653]" />
@@ -116,99 +147,132 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
         </div>
       </div>
 
-      {/* GRID DE POTREROS CON SEMÁFORO DE CARGA */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {potreros.map(pot => {
-          const carga = pot.carga_actual_ev_ha || 0;
-          const receptividad = pot.receptividad_objetivo_ev_ha || 1.0;
-          const pctUso = Math.min(100, Math.round((carga / receptividad) * 100));
+      {/* GRID DE POTREROS CON SEMÁFORO DE CARGA O ESTADO VACÍO */}
+      {potreros.length === 0 ? (
+        <div className="bg-[#FFFFFF] rounded-2xl border border-dashed border-[#DDDCD1] p-12 text-center text-[#74796D] shadow-sm">
+          <Compass className="w-12 h-12 text-[#B6A77D] mx-auto mb-3 opacity-50" />
+          <h4 className="font-bold text-base text-[#24382C] mb-1">No hay potreros registrados</h4>
+          <p className="text-xs max-w-sm mx-auto mb-4">
+            Defina los potreros de su campo para monitorear la carga animal en Equivalentes Vaca (EV/ha) y planificar pastoreos rotativos.
+          </p>
+          <button
+            onClick={handleAbrirNuevo}
+            className="px-4 py-2 bg-[#83A653] hover:bg-[#536747] text-white text-xs font-bold rounded-xl transition-all shadow-sm inline-flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            Crear Primer Potrero
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {potreros.map(pot => {
+            const carga = pot.carga_actual_ev_ha || 0;
+            const receptividad = pot.receptividad_objetivo_ev_ha || 1.0;
+            const pctUso = Math.min(100, Math.round((carga / receptividad) * 100));
 
-          let badgeColor = 'bg-[#38845A]/15 text-[#38845A] border-[#38845A]/30';
-          let statusText = 'Carga Óptima';
-          if (pot.estado_pastoreo === 'Vacio') {
-            badgeColor = 'bg-[#E9E5D9] text-[#74796D] border-[#DDDCD1]';
-            statusText = 'En Descanso (Vacío)';
-          } else if (pot.estado_pastoreo === 'Alerta') {
-            badgeColor = 'bg-[#D9A441]/15 text-[#D9A441] border-[#D9A441]/30';
-            statusText = 'Carga Próxima al Límite';
-          } else if (pot.estado_pastoreo === 'Sobrepastoreo') {
-            badgeColor = 'bg-[#C65B50]/15 text-[#C65B50] border-[#C65B50]/30';
-            statusText = 'Sobrepastoreo Crítico';
-          }
+            let badgeColor = 'bg-[#38845A]/15 text-[#38845A] border-[#38845A]/30';
+            let statusText = 'Carga Óptima';
+            if (pot.estado_pastoreo === 'Vacio') {
+              badgeColor = 'bg-[#E9E5D9] text-[#74796D] border-[#DDDCD1]';
+              statusText = 'En Descanso (Vacío)';
+            } else if (pot.estado_pastoreo === 'Alerta') {
+              badgeColor = 'bg-[#D9A441]/15 text-[#D9A441] border-[#D9A441]/30';
+              statusText = 'Carga Próxima al Límite';
+            } else if (pot.estado_pastoreo === 'Sobrepastoreo') {
+              badgeColor = 'bg-[#C65B50]/15 text-[#C65B50] border-[#C65B50]/30';
+              statusText = 'Sobrepastoreo Crítico';
+            }
 
-          return (
-            <div key={pot.id} className="bg-[#FFFFFF] rounded-2xl border border-[#DDDCD1] p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}`}>
-                    {statusText}
-                  </span>
-                  <div className="flex items-center gap-1 text-[11px] text-[#74796D]">
-                    <Clock className="w-3.5 h-3.5 text-[#83A653]" />
+            return (
+              <div key={pot.id} className="bg-[#FFFFFF] rounded-2xl border border-[#DDDCD1] p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColor}`}>
+                      {statusText}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEditarPotrero(pot)}
+                        className="p-1 text-[#74796D] hover:text-[#24382C] rounded hover:bg-[#E9E5D9] transition-colors"
+                        title="Modificar Potrero"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleEliminarPotrero(pot.id, pot.nombre)}
+                        className="p-1 text-[#74796D] hover:text-[#C65B50] rounded hover:bg-[#C65B50]/15 transition-colors"
+                        title="Eliminar Potrero"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <h4 className="text-base font-bold text-[#24382C] mb-1">{pot.nombre}</h4>
+                  <p className="text-xs text-[#74796D] flex items-center gap-1 mb-3">
+                    <Trees className="w-3.5 h-3.5 text-[#536747]" />
+                    {pot.recurso_forrajero}
+                  </p>
+
+                  {/* KPI METRICS */}
+                  <div className="grid grid-cols-2 gap-2 p-3 bg-[#F7F7F2] rounded-xl mb-3 border border-[#DDDCD1]/60">
+                    <div>
+                      <span className="text-[10px] text-[#74796D] uppercase block">Superficie</span>
+                      <span className="text-sm font-bold text-[#24382C]">{pot.superficie_ha} ha</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#74796D] uppercase block">Hacienda</span>
+                      <span className="text-sm font-bold text-[#536747]">{pot.cabezas_actuales || 0} cabezas</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#74796D] uppercase block">Carga Instantánea</span>
+                      <span className="text-sm font-mono font-bold text-[#83A653]">{carga.toFixed(2)} EV/ha</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#74796D] uppercase block">Receptividad Obj.</span>
+                      <span className="text-sm font-mono text-[#74796D]">{receptividad.toFixed(2)} EV/ha</span>
+                    </div>
+                  </div>
+
+                  {/* Barra de presión de pastoreo */}
+                  <div>
+                    <div className="flex justify-between text-[11px] font-semibold mb-1 text-[#343B2D]">
+                      <span>Presión Forrajera</span>
+                      <span>{pctUso}%</span>
+                    </div>
+                    <div className="w-full bg-[#E9E5D9] h-2 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          pctUso > 100 ? 'bg-[#C65B50]' : pctUso > 85 ? 'bg-[#D9A441]' : 'bg-[#83A653]'
+                        }`}
+                        style={{ width: `${Math.min(100, pctUso)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botón rápido mover a este potrero */}
+                <div className="pt-4 border-t border-[#DDDCD1]/60 mt-4 flex items-center justify-between text-[11px] text-[#74796D]">
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-[#83A653]" />
                     <span>{pot.dias_descanso_actual} días desc.</span>
                   </div>
-                </div>
-
-                <h4 className="text-base font-bold text-[#24382C] mb-1">{pot.nombre}</h4>
-                <p className="text-xs text-[#74796D] flex items-center gap-1 mb-3">
-                  <Trees className="w-3.5 h-3.5 text-[#536747]" />
-                  {pot.recurso_forrajero}
-                </p>
-
-                {/* KPI METRICS */}
-                <div className="grid grid-cols-2 gap-2 p-3 bg-[#F7F7F2] rounded-xl mb-3 border border-[#DDDCD1]/60">
-                  <div>
-                    <span className="text-[10px] text-[#74796D] uppercase block">Superficie</span>
-                    <span className="text-sm font-bold text-[#24382C]">{pot.superficie_ha} ha</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-[#74796D] uppercase block">Hacienda</span>
-                    <span className="text-sm font-bold text-[#536747]">{pot.cabezas_actuales || 0} cabezas</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-[#74796D] uppercase block">Carga Instantánea</span>
-                    <span className="text-sm font-mono font-bold text-[#83A653]">{carga.toFixed(2)} EV/ha</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-[#74796D] uppercase block">Receptividad Obj.</span>
-                    <span className="text-sm font-mono text-[#74796D]">{receptividad.toFixed(2)} EV/ha</span>
-                  </div>
-                </div>
-
-                {/* Barra de presión de pastoreo */}
-                <div>
-                  <div className="flex justify-between text-[11px] font-semibold mb-1 text-[#343B2D]">
-                    <span>Presión Forrajera</span>
-                    <span>{pctUso}%</span>
-                  </div>
-                  <div className="w-full bg-[#E9E5D9] h-2 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        pctUso > 100 ? 'bg-[#C65B50]' : pctUso > 85 ? 'bg-[#D9A441]' : 'bg-[#83A653]'
-                      }`}
-                      style={{ width: `${Math.min(100, pctUso)}%` }}
-                    />
-                  </div>
+                  <button
+                    onClick={() => {
+                      setMovForm(prev => ({ ...prev, potrero_destino_id: pot.id }));
+                      setModalMov(true);
+                    }}
+                    className="py-1 px-2.5 font-bold text-[#536747] hover:text-[#24382C] bg-[#F7F7F2] hover:bg-[#E9E5D9] rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <ArrowRightLeft className="w-3 h-3" />
+                    Mudar aquí
+                  </button>
                 </div>
               </div>
-
-              {/* Botón rápido mover a este potrero */}
-              <div className="pt-4 border-t border-[#DDDCD1]/60 mt-4">
-                <button
-                  onClick={() => {
-                    setMovForm(prev => ({ ...prev, potrero_destino_id: pot.id }));
-                    setModalMov(true);
-                  }}
-                  className="w-full py-1.5 text-xs font-bold text-[#536747] hover:text-[#24382C] bg-[#F7F7F2] hover:bg-[#E9E5D9] rounded-lg transition-colors flex items-center justify-center gap-1"
-                >
-                  <ArrowRightLeft className="w-3.5 h-3.5" />
-                  Mudar rodeo aquí
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* HISTORIAL RECIENTE DE MOVIMIENTOS (FN-3.3) */}
       <div className="bg-[#FFFFFF] rounded-2xl border border-[#DDDCD1] shadow-sm p-5">
@@ -356,11 +420,13 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
         </div>
       )}
 
-      {/* MODAL NUEVO POTRERO */}
+      {/* MODAL CREAR / EDITAR POTRERO */}
       {modalPotrero && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <form onSubmit={handleCrearPotrero} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-[#DDDCD1]">
-            <h3 className="text-base font-bold text-[#24382C] mb-4">Nuevo Potrero Ganadero</h3>
+          <form onSubmit={handleGuardarPotrero} className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-[#DDDCD1]">
+            <h3 className="text-base font-bold text-[#24382C] mb-4">
+              {nuevoPotrero.id ? 'Modificar Potrero Ganadero' : 'Nuevo Potrero Ganadero'}
+            </h3>
             <div className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-[#343B2D] mb-1">Nombre o Número de Potrero</label>
@@ -406,6 +472,16 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
                   className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg focus:outline-none focus:border-[#83A653]"
                 />
               </div>
+              <div>
+                <label className="block font-semibold text-[#343B2D] mb-1">Días de Descanso Acumulados</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={nuevoPotrero.dias_descanso_actual || 0}
+                  onChange={e => setNuevoPotrero({ ...nuevoPotrero, dias_descanso_actual: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg font-mono focus:outline-none focus:border-[#83A653]"
+                />
+              </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button
@@ -419,7 +495,7 @@ export const PotrerosCargaView: React.FC<Props> = ({ onDataChanged }) => {
                 type="submit"
                 className="px-4 py-2 bg-[#83A653] hover:bg-[#536747] text-white rounded-lg text-xs font-bold transition-colors"
               >
-                Crear Potrero
+                {nuevoPotrero.id ? 'Guardar Modificación' : 'Crear Potrero'}
               </button>
             </div>
           </form>
