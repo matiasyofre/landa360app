@@ -226,8 +226,8 @@ export const ganaderiaService = {
     if (!data) {
       return [];
     }
-    // Si contiene semillas mock antiguas (ani-1), limpiar completamente
-    if (data.includes('ani-1') || data.includes('A-101') || data.includes('982000412891001')) {
+    // Purgar únicamente semillas de prueba legacy exactas si existieran
+    if (data.includes('"caravana_visual":"A-101"') || data.includes('"caravana_rfid":"982000412891001"')) {
       this.limpiarDatosDePrueba();
       return [];
     }
@@ -367,7 +367,7 @@ export const ganaderiaService = {
   getPesadas(): PesadaAnimal[] {
     const data = localStorage.getItem(STORAGE_KEY_PESADAS);
     if (!data) return [];
-    if (data.includes('ani-1')) {
+    if (data.includes('"caravana_visual":"A-101"')) {
       localStorage.removeItem(STORAGE_KEY_PESADAS);
       return [];
     }
@@ -623,10 +623,6 @@ export const ganaderiaService = {
   getCostos(): CostoGanadero[] {
     const data = localStorage.getItem(STORAGE_KEY_COSTOS);
     if (!data) return [];
-    if (data.includes('cst-1')) {
-      localStorage.removeItem(STORAGE_KEY_COSTOS);
-      return [];
-    }
     return JSON.parse(data);
   },
 

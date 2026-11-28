@@ -42,7 +42,7 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
     caravana_visual: '',
     caravana_rfid: '',
     categoria_id: categorias[0]?.id || '',
-    rodeo_id: rodeos[0]?.id || '',
+    rodeo_id: '',
     raza: 'Angus Negro',
     sexo: 'Hembra',
     peso_actual_kg: 400,
@@ -50,23 +50,42 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
     estado: 'Activo'
   });
 
+  const handleAbrirModalAlta = () => {
+    const catsActuales = ganaderiaService.getCategorias();
+    const rodsActuales = ganaderiaService.getRodeos();
+    setCategorias(catsActuales);
+    setRodeos(rodsActuales);
+    setNuevoAnimal({
+      caravana_visual: '',
+      caravana_rfid: '',
+      categoria_id: catsActuales[0]?.id || '',
+      rodeo_id: rodsActuales[0]?.id || '',
+      raza: 'Angus Negro',
+      sexo: 'Hembra',
+      peso_actual_kg: 400,
+      origen: 'Propio (Nacido)',
+      estado: 'Activo'
+    });
+    setModalAlta(true);
+  };
+
   const handleAltaAnimal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nuevoAnimal.caravana_visual) return;
+    if (!nuevoAnimal.caravana_visual?.trim()) return;
 
-    const cat = categorias.find(c => c.id === nuevoAnimal.categoria_id);
+    const cat = categorias.find(c => c.id === nuevoAnimal.categoria_id) || categorias[0];
     const rod = rodeos.find(r => r.id === nuevoAnimal.rodeo_id);
 
     const a: Animal = {
-      id: `ani-${Date.now()}`,
+      id: `animal_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       tenant_id: 'default',
-      caravana_visual: nuevoAnimal.caravana_visual,
-      caravana_rfid: nuevoAnimal.caravana_rfid || undefined,
-      categoria_id: nuevoAnimal.categoria_id || '',
-      categoria_nombre: cat?.nombre,
+      caravana_visual: nuevoAnimal.caravana_visual.trim(),
+      caravana_rfid: nuevoAnimal.caravana_rfid ? nuevoAnimal.caravana_rfid.trim() : undefined,
+      categoria_id: nuevoAnimal.categoria_id || (cat?.id || ''),
+      categoria_nombre: cat ? cat.nombre : 'Vaca de Cría',
       factor_ev: cat?.factor_ev || 1.0,
-      rodeo_id: nuevoAnimal.rodeo_id || '',
-      rodeo_nombre: rod?.nombre,
+      rodeo_id: nuevoAnimal.rodeo_id || undefined,
+      rodeo_nombre: rod ? rod.nombre : 'General',
       raza: nuevoAnimal.raza || 'Angus Negro',
       sexo: nuevoAnimal.sexo || 'Hembra',
       peso_actual_kg: Number(nuevoAnimal.peso_actual_kg) || 0,
@@ -207,7 +226,7 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
           )}
 
           <button
-            onClick={() => setModalAlta(true)}
+            onClick={handleAbrirModalAlta}
             className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 bg-[#83A653] hover:bg-[#536747] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
@@ -360,12 +379,13 @@ export const InventarioRodeosView: React.FC<Props> = ({ onSelectAnimal, onRefres
                 <div>
                   <label className="block font-semibold text-[#343B2D] mb-1">Rodeo Asignado</label>
                   <select
-                    value={nuevoAnimal.rodeo_id}
+                    value={nuevoAnimal.rodeo_id || ''}
                     onChange={e => setNuevoAnimal({ ...nuevoAnimal, rodeo_id: e.target.value })}
                     className="w-full px-3 py-2 border border-[#DDDCD1] rounded-lg focus:outline-none focus:border-[#83A653]"
                   >
+                    <option value="">Sin rodeo asignado (General / Manga)</option>
                     {rodeos.map(r => (
-                      <option key={r.id} value={r.id}>{r.nombre}</option>
+                      <option key={r.id} value={r.id}>{r.nombre} ({r.finalidad})</option>
                     ))}
                   </select>
                 </div>

@@ -154,7 +154,7 @@ export const IngestaRfidView: React.FC<Props> = ({ onLecturaConsolidada }) => {
       } else {
         // Dar de alta nuevo animal registrado por la manga
         const nuevo: Animal = {
-          id: `ani-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          id: `animal_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
           tenant_id: 'default',
           caravana_rfid: l.eid,
           caravana_visual: l.vid,
